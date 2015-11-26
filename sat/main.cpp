@@ -9,10 +9,10 @@ int main(int argc, const char* argv[]) {
     std::cout << "No args given, running default instance thing" << std::endl;
     inputName = "data/uf20-010.cnf";
   }
-  Formula formula = readInstance(inputName);
-  std::cout << "Read instance" << std::endl;
-  std::cout << formula.size() << std::endl;
-  for (auto clause : formula) {
+  SATInput input(inputName);
+  std::cout << "Read instance with " << input.numLiterals << " literals and ";
+  std::cout << input.numClauses << " clauses" << std::endl;
+  for (auto clause : input.formula) {
     for (auto literal : clause) {
       std::cout << literal << " ";
     }

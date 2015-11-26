@@ -7,4 +7,10 @@ using std::string;
 typedef vector<int> Clause;
 typedef vector<Clause> Formula;
 
-Formula readInstance(string);
+class SATInput {
+ public:
+  int numClauses;
+  int numLiterals;
+  Formula formula;
+  SATInput(string fileName);
+};

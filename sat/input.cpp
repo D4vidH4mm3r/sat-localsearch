@@ -5,9 +5,8 @@
 
 using std::ifstream;
 
-Formula readInstance(string file_name) {
+SATInput::SATInput(string file_name) : formula() {
   ifstream filestream(file_name.c_str());
-  Formula formula(0);
   if (!filestream) {
     std::cerr << "Cannot open file " << file_name << std::endl;
     exit(1);
@@ -19,6 +18,14 @@ Formula readInstance(string file_name) {
   } while (line[0] == 'c');
 
   // please remember to end file with at least one of these
+  Formula &formula = this->formula;
+  iss.str(line);
+  // first interesting line has "p cnf <nlits> <nclauses>"
+  string sub;
+  iss >> sub;
+  iss >> sub;
+  iss >> this->numLiterals;
+  iss >> this->numClauses;
   getline(filestream, line);
   while (line[0] != '%' && line[0] != '0') {
     Clause clause(0);
@@ -33,5 +40,4 @@ Formula readInstance(string file_name) {
     formula.push_back(clause);
     getline(filestream, line);
   }
-  return formula;
 }
