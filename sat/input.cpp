@@ -41,3 +41,13 @@ SATInput::SATInput(string file_name) : formula() {
     getline(filestream, line);
   }
 }
+
+std::ostream& operator<<(std::ostream& os, const Clause& c) {
+  for (auto iter = c.begin(); iter < c.end()-1; iter++) {
+    os << *iter << " ∨ ";
+  }
+  if (c.size() > 0) {
+    os << c.back();
+  }
+  return os;
+}

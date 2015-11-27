@@ -14,3 +14,5 @@ class SATInput {
   Formula formula;
   SATInput(string fileName);
 };
+
+std::ostream& operator<<(std::ostream& os, const Clause& c);
