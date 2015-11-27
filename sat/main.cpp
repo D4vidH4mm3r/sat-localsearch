@@ -21,7 +21,21 @@ int main(int argc, const char* argv[]) {
   for (unsigned int i=0; i<inst.size(); i++) {
     inst[i] = rand()&1;
   }
+  int numSatisfied = 0;
+  int numFailed = 0;
   for (Clause clause : input.formula) {
-    std::cout << clause << std::endl;
+    bool clauseSatisfied = false;
+    for (int lit : clause) {
+      if ((lit > 0 && inst[lit]) || (lit < 0 && !inst[-lit])) {
+        clauseSatisfied = true;
+        numSatisfied++;
+        break;
+      }
+    }
+    if (!clauseSatisfied) {
+      numFailed++;
+    }
   }
+  std::cout << "Random instance satisfied " << numSatisfied << " and failed " << numFailed << std::endl;
+  std::cout << "(" << static_cast<float>(numSatisfied) / static_cast<float>(input.numClauses) * 100 << "%)" << std::endl;
 }
