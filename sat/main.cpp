@@ -1,9 +1,9 @@
 #include "input.h"
+#include "state.h"
 #include <iostream>
 #include <ctime>
 #include <cstdlib>
 
-typedef vector<bool> Instantiation;
 
 int main(int argc, const char* argv[]) {
   srand(time(0)); // seed random number generator
@@ -19,28 +19,14 @@ int main(int argc, const char* argv[]) {
   for (unsigned int i=0; i<inst.size(); i++) {
     inst[i] = rand()&1;
   }
+  SATState state(input, inst);
   for (int i=0; i<input.numLiterals; i++) {
     std::cout << i+1 << " appears in";
-    for (int j : input.literalInClauses[i]) {
+    for (int j : state.literalInClauses[i]) {
       std::cout << " " << j;
     }
     std::cout << std::endl;
   }
-  int numSatisfied = 0;
-  int numFailed = 0;
-  for (Clause clause : input.formula) {
-    bool clauseSatisfied = false;
-    for (int lit : clause) {
-      if ((lit > 0 && inst[lit-1]) || (lit < 0 && !inst[-lit-1])) {
-        clauseSatisfied = true;
-        numSatisfied++;
-        break;
-      }
-    }
-    if (!clauseSatisfied) {
-      numFailed++;
-    }
-  }
-  std::cout << "Random instance satisfied " << numSatisfied << " and failed " << numFailed << std::endl;
-  std::cout << "(" << static_cast<float>(numSatisfied) / static_cast<float>(input.numClauses) * 100 << "%)" << std::endl;
+  std::cout << "Random instance satisfied " << state.numSatisfied << " and failed " << state.numFailed << std::endl;
+  std::cout << "(" << static_cast<float>(state.numSatisfied) / static_cast<float>(input.numClauses) * 100 << "%)" << std::endl;
 }
