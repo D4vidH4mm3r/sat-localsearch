@@ -5,7 +5,7 @@
 
 using std::ifstream;
 
-SATInput::SATInput(string file_name) : formula() {
+SATInput::SATInput(string file_name) : formula(), literalInClauses() {
   ifstream filestream(file_name.c_str());
   if (!filestream) {
     std::cerr << "Cannot open file " << file_name << std::endl;
@@ -17,16 +17,19 @@ SATInput::SATInput(string file_name) : formula() {
     getline(filestream, line);
   } while (line[0] == 'c');
 
-  // please remember to end file with at least one of these
-  Formula &formula = this->formula;
   iss.str(line);
   // first interesting line has "p cnf <nlits> <nclauses>"
   string sub;
   iss >> sub;
   iss >> sub;
-  iss >> this->numLiterals;
-  iss >> this->numClauses;
+  iss >> numLiterals;
+  iss >> numClauses;
   getline(filestream, line);
+  // initialize lit -> clause map
+  for (int lit=0; lit<numLiterals; lit++) {
+    literalInClauses.push_back(vector<int>(0));
+  }
+  int clauseNum = 0;
   while (line[0] != '%' && line[0] != '0') {
     Clause clause(0);
     iss.clear();
@@ -35,10 +38,14 @@ SATInput::SATInput(string file_name) : formula() {
     iss >> lit;
     while (lit != 0) {
       clause.push_back(lit);
+      // put lit -> clause in map also
+      int absLit = lit > 0 ? lit : -lit;
+      literalInClauses[absLit-1].push_back(clauseNum);
       iss >> lit;
     }
     formula.push_back(clause);
     getline(filestream, line);
+    clauseNum++;
   }
 }
 

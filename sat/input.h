@@ -1,5 +1,6 @@
 #include <vector>
 #include <string>
+#include <map>
 
 using std::vector;
 using std::string;
@@ -12,6 +13,7 @@ class SATInput {
   int numClauses;
   int numLiterals;
   Formula formula;
+  vector<vector<int> > literalInClauses;
   SATInput(string fileName);
 };
 
