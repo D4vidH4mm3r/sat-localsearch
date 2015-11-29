@@ -4,11 +4,14 @@
 
 class SATState {
  public:
+  SATState(SATInput*, Instantiation);
+  SATInput* input;
   int numSatisfied;
   int numFailed;
   vector<bool> satisfied;
   vector<vector<int> > literalInClauses;
-  SATState(SATInput, Instantiation);
+  // TODO: store instantiation in state
+  int flipDelta(int literal, Instantiation inst); // note: not 0-indexed
 };
 
 #endif
