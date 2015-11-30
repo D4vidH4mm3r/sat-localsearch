@@ -1,32 +1,52 @@
+#include <algorithm>
+#include <iostream>
 #include "state.h"
 
-SATState::SATState(SATInput* input, Instantiation inst) :
+SATState::SATState(SATInput* input, int starttype) :
   input(input),
+  inst(input->numLiterals),
   numSatisfied(0),
   numFailed(input->numClauses),
-  satisfied(input->numClauses, false),
-  literalInClauses(input->numLiterals, vector<int>(0)) {
+  literalInClauses(input->numLiterals, vector<int>(0)),
+  satisfied(input->numClauses, false) {
+  // initialize some instantiation
+  switch (starttype) {
+  case 0: // random instantiation
+    for (unsigned int i=0; i<inst.size(); i++) {
+      inst[i] = rand()&1;
+    }
+    break;
+  default:
+    throw "Unknown start type";
+  }
+  // compute what is failed and so on
+  recomputeFailed(false);
+}
+
+void SATState::recomputeFailed(bool zeroOut) {
+  if (zeroOut) {
+    numSatisfied = 0;
+    numFailed = input->numClauses;
+    std::fill(satisfied.begin(), satisfied.end(), false);
+  }
   int clauseNum = 0;
   for (Clause clause : input->formula) {
-    bool clauseSatisfied = false;
     for (int lit : clause) {
       // put lit -> clause in map also
       int litIndex = (lit > 0 ? lit : -lit) - 1;
       literalInClauses[litIndex].push_back(clauseNum);
       if ((lit > 0 && inst[lit-1]) || (lit < 0 && !inst[-lit-1])) {
         satisfied[clauseNum] = true;
-        clauseSatisfied = true;
+        numSatisfied++;
+        numFailed--;
+        break;
       }
-    }
-    if (clauseSatisfied) {
-      numSatisfied++;
-      numFailed--;
     }
     clauseNum++;
   }
 }
 
-int SATState::flipDelta(int literal, Instantiation inst) {
+int SATState::flipDelta(int literal) {
   int res = 0;
   for (int clauseIndex : literalInClauses[literal-1]) {
     if (satisfied[clauseIndex]) {
@@ -40,6 +60,7 @@ int SATState::flipDelta(int literal, Instantiation inst) {
         }
         if (thisSatisfies) {
           stillSatisfied = true;
+          break;
         }
       }
       if (!stillSatisfied) {
@@ -51,4 +72,10 @@ int SATState::flipDelta(int literal, Instantiation inst) {
     }
   }
   return res;
+}
+
+void SATState::flip(int literal) {
+  inst[literal-1] = !inst[literal-1];
+  // update counts and auxilliary structures
+  recomputeFailed(true);
 }
