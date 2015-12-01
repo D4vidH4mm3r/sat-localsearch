@@ -13,6 +13,7 @@ class SATState {
   // element i = (sign)j indicates that literal i appears with sign in clause j
   int flipDelta(int literal); // note: not 0-indexed
   void flip(int literal);
+  void flip_slow(int literal);
  private:
   vector<int> numSatisfying;
   void recomputeFailed(bool zeroOut);

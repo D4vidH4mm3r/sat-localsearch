@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <iostream>
+#include <random>
 #include "state.h"
 
 SATState::SATState(SATInput* input, int starttype) :
@@ -10,13 +11,14 @@ SATState::SATState(SATInput* input, int starttype) :
   literalInClauses(input->numLiterals, vector<int>(0)),
   numSatisfying(input->numClauses, 0) {
   // initialize some instantiation
-  switch (starttype) {
-  case 0: // random instantiation
+  if (starttype == 0) {
+    std::random_device randDev;
+    std::minstd_rand randGen(randDev());
+    std::uniform_int_distribution<int> randDist(0, 1);
     for (unsigned int i=0; i<inst.size(); i++) {
-      inst[i] = rand()&1;
+      inst[i] = randDist(randGen);
     }
-    break;
-  default:
+  } else {
     throw "Unknown start type";
   }
   int clauseNum = 1;
@@ -94,8 +96,50 @@ int SATState::flipDelta(int literal) {
   return res;
 }
 
-void SATState::flip(int literal) {
+void SATState::flip_slow(int literal) {
   inst[literal-1] = !inst[literal-1];
   // update counts and auxilliary structures
   recomputeFailed(true);
+}
+
+void SATState::flip(int literal) {
+  bool valAfterFlip = !inst[literal-1];
+  inst[literal-1] = valAfterFlip;
+  // update counts and auxilliary structures
+  for (int clause : literalInClauses[literal-1]) {
+    int clauseIndex;
+    if (clause > 0) {
+      clauseIndex = clause - 1;
+      if (!valAfterFlip) {
+        // this used to satisfy the clause
+        numSatisfying[clauseIndex]--;
+        if (numSatisfying[clauseIndex] == 0) {
+          numSatisfied--;
+          numFailed++;
+        }
+      } else {
+        // this used to not satisfy the clause
+        numSatisfying[clauseIndex]++;
+        if (numSatisfying[clauseIndex] == 1) {
+          numSatisfied++;
+          numFailed--;
+        }
+      }
+    } else { // symmetric
+      clauseIndex = -clause - 1;
+      if (valAfterFlip) {
+        numSatisfying[clauseIndex]--;
+        if (numSatisfying[clauseIndex] == 0) {
+          numSatisfied--;
+          numFailed++;
+        }
+      } else {
+        numSatisfying[clauseIndex]++;
+        if (numSatisfying[clauseIndex] == 1) {
+          numSatisfied++;
+          numFailed--;
+        }
+      }
+    }
+  }
 }
