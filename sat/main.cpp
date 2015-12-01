@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cassert>
 #include <ctime>
 #include <random>
@@ -26,7 +27,7 @@ int main(int argc, const char* argv[]) {
 
   // initialize state
   SATState state(input, 0);
-  cout << "Random instance satisfied " << state.numSatisfied << " and failed " << state.numFailed << endl;;
+  cout << "Random instance satisfied " << state.numSatisfied << " and failed " << state.numFailed << endl;
   cout << "(" << static_cast<float>(state.numSatisfied) /\
     static_cast<float>(input->numClauses) * 100 << "%)" << endl;;
 
@@ -34,38 +35,51 @@ int main(int argc, const char* argv[]) {
   std::random_device randDev;
   std::minstd_rand randGen(randDev());
   std::uniform_int_distribution<int> randDist(0, 0);
-  for (int j=0; j<100; j++) {
-    randDist.param(std::uniform_int_distribution<int>::param_type(0, 0));
-    int randomNonimproving = -1;
-    int numNonimproving = 0;
-    int gotStrictImprovement = false;
-    for (int i=0; i<input->numLiterals; i++) {
-      int delta = state.flipDelta(i+1);
-      if (delta < 0) {
-        state.flip(i+1);
-        gotStrictImprovement = true;
-        break;
-      } else if (delta == 0) {
-        numNonimproving++;
-        if (randDist(randGen) == 0) {
-          randomNonimproving = i;
-        }
-        randDist.param(std::uniform_int_distribution<int>::param_type(0, numNonimproving));
-      }
-    }
-    if (!gotStrictImprovement) {
-      if (randomNonimproving == -1) {
-        cout << "There were no non-worsening flips :(" << endl;
-        break;
-      } else {
-        //cout << "Choosing literal " << randomNonimproving+1 << " out of " << numNonimproving << " different nonimproving" << endl;
-        state.flip(randomNonimproving+1);
-      }
-    }
+  for (int j=0; j<10000; j++) {
+
     if (state.numFailed == 0) {
-      cout << "Good times, nothing is failed" << endl;
+      cout << "Nothing is failed :D" << endl;
       break;
     }
+
+    // choose randomly a failed clause
+    randDist.param(std::uniform_int_distribution<int>::param_type(0, state.numFailed-1));
+    int chooseNumber = randDist(randGen);
+    int randomFailing;
+    vector<int>::iterator failingClause;
+    cout << "Looking for the " << chooseNumber << "th failed" << endl;
+    {
+      int count = 0;
+      failingClause = std::find_if(state.numSatisfying.begin(), state.numSatisfying.end(), [&] (int const n) {
+          if (n == 0) {
+            if (count == chooseNumber) {
+              return true;
+            }
+            count++;
+          }
+          return false;
+        });
+      randomFailing = std::distance(state.numSatisfying.begin(), failingClause);
+    }
+
+    // find the best literal to flip in this clause
+    int bestDelta = input->numClauses+1;
+    int bestFlip = -1;
+    for (int lit : input->formula[randomFailing]) {
+      int absLit = lit>0 ? lit : -lit;
+      int delta = state.flipDelta(absLit);
+      if (delta < bestDelta) {
+        bestDelta = delta;
+        bestFlip = absLit;
+      }
+    }
+    cout << "Best literal to flip here is " << bestFlip << " (gives Δ=" << bestDelta << ")" << endl;
+    state.flip(bestFlip);
   }
-  cout << state.numSatisfied << endl;;
+  for (int i=0; i<input->numLiterals; i++) {
+    cout << i+1 << ": " << state.inst[i] << endl;
+  }
+  cout << "Final instance satisfied " << state.numSatisfied << " and failed " << state.numFailed << endl;
+  cout << "(" << static_cast<float>(state.numSatisfied) /\
+    static_cast<float>(input->numClauses) * 100 << "%)" << endl;;
 }

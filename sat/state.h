@@ -14,8 +14,8 @@ class SATState {
   int flipDelta(int literal); // note: not 0-indexed
   void flip(int literal);
   void flip_slow(int literal);
- private:
   vector<int> numSatisfying;
+ private:
   void recomputeFailed(bool zeroOut);
 };
 
