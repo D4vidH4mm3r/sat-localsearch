@@ -79,7 +79,7 @@ int main(int argc, const char* argv[]) {
   for (int i=0; i<input->numLiterals; i++) {
     cout << i+1 << ": " << state.inst[i] << endl;
   }
-  cout << "Final instance satisfied " << state.numSatisfied << " and failed " << state.numFailed << endl;
   cout << "(" << static_cast<float>(state.numSatisfied) /\
     static_cast<float>(input->numClauses) * 100 << "%)" << endl;;
+  cout << state;
 }

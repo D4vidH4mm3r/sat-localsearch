@@ -143,3 +143,20 @@ void SATState::flip(int literal) {
     }
   }
 }
+
+std::ostream& operator<<(std::ostream& os, const SATState& s) {
+  os << "v:";
+  int litNum = 1;
+  for (bool val : s.inst) {
+    if (val) {
+      os << " " << litNum;
+    } else {
+      os << " " << -litNum;
+    }
+    litNum++;
+  }
+  os << std::endl << std::endl;
+  os << "Cost: " << s.numFailed << std::endl;
+  os << "Time: " << "NOT COMPUTED :(" << std::endl;
+  return os;
+}

@@ -19,4 +19,5 @@ class SATState {
   void recomputeFailed(bool zeroOut);
 };
 
+std::ostream& operator<<(std::ostream& os, const SATState& s);
 #endif
