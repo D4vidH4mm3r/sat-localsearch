@@ -140,6 +140,5 @@ std::ostream& operator<<(std::ostream& os, const SATState& s) {
   }
   os << std::endl << std::endl;
   os << "Cost: " << s.cost << std::endl;
-  os << "Time: " << "NOT COMPUTED :(" << std::endl;
   return os;
 }

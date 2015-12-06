@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cassert>
+#include <chrono>
 #include <ctime>
 #include <random>
 #include <iostream>
@@ -11,6 +12,7 @@ using std::cout;
 using std::endl;
 
 int main(int argc, const char* argv[]) {
+  bool verbose = false;
   // read parameters for program
   string inputName;
   if (argc < 2) {
@@ -25,6 +27,8 @@ int main(int argc, const char* argv[]) {
       } else if (arg == "--main::seed") {
         // doesn't use seed right now
         i++;
+      } else if (arg == "--verbose" || arg == "-v") {
+        verbose = true;
       } else {
         inputName = arg;
       }
@@ -33,15 +37,20 @@ int main(int argc, const char* argv[]) {
 
   // read instance
   SATInput* input = new SATInput(inputName);
-  cout << "Read instance with " << input->numLiterals << " literals and ";
-  cout << input->numClauses << " clauses" << endl;;
+  if (verbose) {
+    cout << "Read instance with " << input->numLiterals << " literals and ";
+    cout << input->numClauses << " clauses" << endl;;
+  }
 
+  auto timeBefore = std::chrono::system_clock::now();
   // initialize state
   SATState state(input, 0);
   int numSatisfied = input->numClauses - state.cost;
-  cout << "Random instance satisfied " << numSatisfied << " and failed " << state.cost << endl;
-  cout << "(" << static_cast<float>(numSatisfied) /\
-    static_cast<float>(input->numClauses) * 100 << "%)" << endl;;
+  if (verbose) {
+    cout << "Random instance satisfied " << numSatisfied << " and failed " << state.cost << endl;
+    cout << "(" << static_cast<float>(numSatisfied) /\
+      static_cast<float>(input->numClauses) * 100 << "%)" << endl;;
+  }
 
   // do some search
   std::random_device randDev;
@@ -50,7 +59,9 @@ int main(int argc, const char* argv[]) {
   for (int j=0; j<10000; j++) {
 
     if (state.cost == 0) {
-      cout << "Nothing is failed :D" << endl;
+      if (verbose) {
+        cout << "Nothing is failed :D" << endl;
+      }
       break;
     }
 
@@ -59,7 +70,9 @@ int main(int argc, const char* argv[]) {
     int chooseNumber = randDist(randGen);
     int randomFailing;
     vector<int>::iterator failingClause;
-    cout << "Looking for the " << chooseNumber << "th failed" << endl;
+    if (verbose) {
+      cout << "Looking for the " << chooseNumber << "th failed" << endl;
+    }
     {
       int count = 0;
       failingClause = std::find_if(state.numSatisfying.begin(), state.numSatisfying.end(), [&] (int const n) {
@@ -85,8 +98,13 @@ int main(int argc, const char* argv[]) {
         bestFlip = absLit;
       }
     }
-    cout << "Best literal to flip here is " << bestFlip << " (gives Δ=" << bestDelta << ")" << endl;
+    if (verbose) {
+      cout << "Best literal to flip here is " << bestFlip << " (gives Δ=" << bestDelta << ")" << endl;
+    }
     state.flip(bestFlip);
   }
+  auto timeAfter = std::chrono::system_clock::now();
+  std::chrono::nanoseconds timeSpent = timeAfter-timeBefore;
   cout << state;
+  cout << "Time: " << static_cast<double>(timeSpent.count())/1e9 << std::endl;
 }
