@@ -15,7 +15,8 @@ class SATInput {
   int numClauses;
   int numLiterals;
   Formula formula;
-  vector<vector<int> > literalInClauses;
+  vector<vector<int> > posInClause;
+  vector<vector<int> > negInClause;
   SATInput(string fileName);
 };
 

@@ -7,7 +7,8 @@ using std::ifstream;
 
 SATInput::SATInput(string file_name) :
   formula(),
-  literalInClauses(0)
+  posInClause(0),
+  negInClause(0)
 {
   ifstream filestream(file_name.c_str());
   if (!filestream) {
@@ -27,7 +28,8 @@ SATInput::SATInput(string file_name) :
   iss >> sub;
   iss >> numLiterals;
   iss >> numClauses;
-  literalInClauses.resize(numLiterals, vector<int>(0));
+  posInClause.resize(numLiterals, vector<int>(0));
+  negInClause.resize(numLiterals, vector<int>(0));
   getline(filestream, line);
   int clauseNum = 1;
   int lit;
@@ -41,10 +43,10 @@ SATInput::SATInput(string file_name) :
       clause.push_back(lit);
       if (lit > 0) {
         litIndex = lit - 1;
-        literalInClauses[litIndex].push_back(clauseNum);
+        posInClause[litIndex].push_back(clauseNum);
       } else {
         litIndex = -lit - 1;
-        literalInClauses[litIndex].push_back(-clauseNum);
+        negInClause[litIndex].push_back(clauseNum);
       }
       iss >> lit;
     }

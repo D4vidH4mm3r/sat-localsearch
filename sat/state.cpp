@@ -56,25 +56,29 @@ void SATState::recomputeFailed(bool zeroOut) {
 int SATState::flipDelta(int literal) {
   int res = 0;
   bool valAfterFlip = !inst[literal-1];
-  for (int clause : input->literalInClauses[literal-1]) {
-    if (clause > 0) {
-      int clauseIndex = clause - 1;
-      if (numSatisfying[clauseIndex] == 0) {
-        // flipping one literal in failed clause will always satisfy it
-        res--;
-      } else if (numSatisfying[clauseIndex] == 1 && !valAfterFlip) {
-        // flipping the literal may fail this one if it was the one satisfying
-        res++;
-      } // if more than two satisfy, nothing changes for this clause
-    } else { // symmetric
-      int clauseIndex = -clause -1;
-      if (numSatisfying[clauseIndex] == 0) {
-        res--;
-      } else if (numSatisfying[clauseIndex] == 1 && valAfterFlip) {
-        res++;
-      }
+  int litIndex = literal-1;
+  int clauseIndex;
+
+  for (int clause : input->posInClause[litIndex]) {
+    clauseIndex = clause - 1;
+    if (numSatisfying[clauseIndex] == 0) {
+      // flipping one literal in failed clause will always satisfy it
+      res--;
+    } else if (numSatisfying[clauseIndex] == 1 && !valAfterFlip) {
+      // flipping the literal may fail this one if it was the one satisfying
+      res++;
+    } // if more than two satisfy, nothing changes for this clause
+  }
+
+  for (int clause : input->negInClause[literal-1]) { // symmetric
+    int clauseIndex = clause - 1;
+    if (numSatisfying[clauseIndex] == 0) {
+      res--;
+    } else if (numSatisfying[clauseIndex] == 1 && valAfterFlip) {
+      res++;
     }
   }
+
   return res;
 }
 
@@ -88,35 +92,36 @@ void SATState::flip(int literal) {
   bool valAfterFlip = !inst[literal-1];
   inst[literal-1] = valAfterFlip;
   // update counts and auxilliary structures
-  for (int clause : input->literalInClauses[literal-1]) {
-    int clauseIndex;
-    if (clause > 0) {
-      clauseIndex = clause - 1;
-      if (!valAfterFlip) {
-        // this used to satisfy the clause
-        numSatisfying[clauseIndex]--;
-        if (numSatisfying[clauseIndex] == 0) {
-          cost++;
-        }
-      } else {
-        // this used to not satisfy the clause
-        numSatisfying[clauseIndex]++;
-        if (numSatisfying[clauseIndex] == 1) {
-          cost--;
-        }
+  int clauseIndex;
+
+  for (int clause : input->posInClause[literal-1]) {
+    clauseIndex = clause - 1;
+    if (!valAfterFlip) {
+      // this used to satisfy the clause
+      numSatisfying[clauseIndex]--;
+      if (numSatisfying[clauseIndex] == 0) {
+        cost++;
       }
-    } else { // symmetric
-      clauseIndex = -clause - 1;
-      if (valAfterFlip) {
-        numSatisfying[clauseIndex]--;
-        if (numSatisfying[clauseIndex] == 0) {
-          cost++;
-        }
-      } else {
-        numSatisfying[clauseIndex]++;
-        if (numSatisfying[clauseIndex] == 1) {
-          cost--;
-        }
+    } else {
+      // this used to not satisfy the clause
+      numSatisfying[clauseIndex]++;
+      if (numSatisfying[clauseIndex] == 1) {
+        cost--;
+      }
+    }
+  }
+
+  for (int clause : input->negInClause[literal-1]) { // symmetric
+    clauseIndex = clause - 1;
+    if (valAfterFlip) {
+      numSatisfying[clauseIndex]--;
+      if (numSatisfying[clauseIndex] == 0) {
+        cost++;
+      }
+    } else {
+      numSatisfying[clauseIndex]++;
+      if (numSatisfying[clauseIndex] == 1) {
+        cost--;
       }
     }
   }
