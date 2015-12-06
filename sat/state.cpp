@@ -6,8 +6,7 @@
 SATState::SATState(SATInput* input, int starttype) :
   input(input),
   inst(input->numLiterals),
-  numSatisfied(0),
-  numFailed(input->numClauses),
+  cost(input->numClauses),
   numSatisfying(input->numClauses, 0) {
   // initialize some instantiation
   if (starttype == 0) {
@@ -26,8 +25,7 @@ SATState::SATState(SATInput* input, int starttype) :
 
 void SATState::recomputeFailed(bool zeroOut) {
   if (zeroOut) {
-    numSatisfied = 0;
-    numFailed = input->numClauses;
+    cost = input->numClauses;
     std::fill(numSatisfying.begin(), numSatisfying.end(), 0);
   }
   int clauseNum = 0;
@@ -49,8 +47,7 @@ void SATState::recomputeFailed(bool zeroOut) {
       }
     }
     if (clauseSatisfied) {
-      numSatisfied++;
-      numFailed--;
+      cost--;
     }
     clauseNum++;
   }
@@ -99,15 +96,13 @@ void SATState::flip(int literal) {
         // this used to satisfy the clause
         numSatisfying[clauseIndex]--;
         if (numSatisfying[clauseIndex] == 0) {
-          numSatisfied--;
-          numFailed++;
+          cost++;
         }
       } else {
         // this used to not satisfy the clause
         numSatisfying[clauseIndex]++;
         if (numSatisfying[clauseIndex] == 1) {
-          numSatisfied++;
-          numFailed--;
+          cost--;
         }
       }
     } else { // symmetric
@@ -115,14 +110,12 @@ void SATState::flip(int literal) {
       if (valAfterFlip) {
         numSatisfying[clauseIndex]--;
         if (numSatisfying[clauseIndex] == 0) {
-          numSatisfied--;
-          numFailed++;
+          cost++;
         }
       } else {
         numSatisfying[clauseIndex]++;
         if (numSatisfying[clauseIndex] == 1) {
-          numSatisfied++;
-          numFailed--;
+          cost--;
         }
       }
     }
@@ -141,7 +134,7 @@ std::ostream& operator<<(std::ostream& os, const SATState& s) {
     litNum++;
   }
   os << std::endl << std::endl;
-  os << "Cost: " << s.numFailed << std::endl;
+  os << "Cost: " << s.cost << std::endl;
   os << "Time: " << "NOT COMPUTED :(" << std::endl;
   return os;
 }

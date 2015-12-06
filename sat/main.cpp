@@ -27,8 +27,9 @@ int main(int argc, const char* argv[]) {
 
   // initialize state
   SATState state(input, 0);
-  cout << "Random instance satisfied " << state.numSatisfied << " and failed " << state.numFailed << endl;
-  cout << "(" << static_cast<float>(state.numSatisfied) /\
+  int numSatisfied = input->numClauses - state.cost;
+  cout << "Random instance satisfied " << numSatisfied << " and failed " << state.cost << endl;
+  cout << "(" << static_cast<float>(numSatisfied) /\
     static_cast<float>(input->numClauses) * 100 << "%)" << endl;;
 
   // do some search
@@ -37,13 +38,13 @@ int main(int argc, const char* argv[]) {
   std::uniform_int_distribution<int> randDist(0, 0);
   for (int j=0; j<10000; j++) {
 
-    if (state.numFailed == 0) {
+    if (state.cost == 0) {
       cout << "Nothing is failed :D" << endl;
       break;
     }
 
     // choose randomly a failed clause
-    randDist.param(std::uniform_int_distribution<int>::param_type(0, state.numFailed-1));
+    randDist.param(std::uniform_int_distribution<int>::param_type(0, state.cost-1));
     int chooseNumber = randDist(randGen);
     int randomFailing;
     vector<int>::iterator failingClause;
@@ -76,10 +77,5 @@ int main(int argc, const char* argv[]) {
     cout << "Best literal to flip here is " << bestFlip << " (gives Δ=" << bestDelta << ")" << endl;
     state.flip(bestFlip);
   }
-  for (int i=0; i<input->numLiterals; i++) {
-    cout << i+1 << ": " << state.inst[i] << endl;
-  }
-  cout << "(" << static_cast<float>(state.numSatisfied) /\
-    static_cast<float>(input->numClauses) * 100 << "%)" << endl;;
   cout << state;
 }

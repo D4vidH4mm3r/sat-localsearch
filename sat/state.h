@@ -7,8 +7,7 @@ class SATState {
   SATState(SATInput*, int);
   SATInput* input;
   Instantiation inst;
-  int numSatisfied;
-  int numFailed;
+  int cost; // number of failed clauses
   // element i = (sign)j indicates that literal i appears with sign in clause j
   int flipDelta(int literal); // note: not 0-indexed
   void flip(int literal);
