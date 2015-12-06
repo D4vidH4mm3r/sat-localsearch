@@ -17,7 +17,18 @@ int main(int argc, const char* argv[]) {
     cout << "No args given, running default instance thing" << endl;;
     inputName = "data/uf20-010.cnf";
   } else {
-    inputName = argv[1];
+    for (int i=1; i<argc; i++) {
+      string arg = argv[i];
+      if (arg == "--main::instance") {
+        inputName = argv[i+1];
+        i++;
+      } else if (arg == "--main::seed") {
+        // doesn't use seed right now
+        i++;
+      } else {
+        inputName = arg;
+      }
+    }
   }
 
   // read instance
