@@ -5,6 +5,7 @@
 class SATState {
  public:
   SATState(SATInput*, int);
+  SATState(const SATState&);
   SATInput* input;
   Instantiation inst;
   int cost; // number of failed clauses

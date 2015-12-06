@@ -44,6 +44,7 @@ int main(int argc, const char* argv[]) {
   auto timeBefore = std::chrono::system_clock::now();
   // initialize state
   SATState state(input, 0);
+  SATState bestState = state;
   int numSatisfied = input->numClauses - state.cost;
   if (verbose) {
     cout << "Random instance satisfied " << numSatisfied << " and failed " << state.cost << endl;
@@ -54,7 +55,18 @@ int main(int argc, const char* argv[]) {
   // do some search
   std::random_device randDev;
   std::minstd_rand randGen(randDev());
-  anneal(state, randGen, verbose);
+  for (int i=0; i<5; i++) {
+    anneal(state, randGen, verbose);
+    if (state.cost < bestState.cost) {
+      if (verbose) {
+        cout << "Better state (" << state.cost << " vs. " << bestState.cost << ") found" << endl;
+      }
+      bestState = state;
+    }
+    if (bestState.cost == 0) {
+      break;
+    }
+  }
 
   auto timeAfter = std::chrono::system_clock::now();
   std::chrono::nanoseconds timeSpent = timeAfter-timeBefore;

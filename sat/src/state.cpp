@@ -23,6 +23,13 @@ SATState::SATState(SATInput* input, int starttype) :
   recomputeFailed(false);
 }
 
+SATState::SATState(const SATState& state) :
+  input(state.input),
+  inst(state.inst),
+  cost(state.cost),
+  numSatisfying(state.numSatisfying) {
+}
+
 void SATState::recomputeFailed(bool zeroOut) {
   if (zeroOut) {
     cost = input->numClauses;
