@@ -2,6 +2,7 @@
 #include <cassert>
 #include <chrono>
 #include <ctime>
+#include <fstream>
 #include <random>
 #include <iostream>
 #include "input.h"
@@ -14,24 +15,23 @@ using std::endl;
 int main(int argc, const char* argv[]) {
   bool verbose = false;
   // read parameters for program
-  string inputName;
-  if (argc < 2) {
-    cout << "No args given, running default instance thing" << endl;;
-    inputName = "data/uf20-010.cnf";
-  } else {
-    for (int i=1; i<argc; i++) {
-      string arg = argv[i];
-      if (arg == "--main::instance") {
-        inputName = argv[i+1];
-        i++;
-      } else if (arg == "--main::seed") {
-        // doesn't use seed right now
-        i++;
-      } else if (arg == "--verbose" || arg == "-v") {
-        verbose = true;
-      } else {
-        inputName = arg;
-      }
+  string inputName = "../data/uf20-010.cnf";
+  string outputName = "";
+  for (int i=1; i<argc; i++) {
+    string arg = argv[i];
+    if (arg == "--main::instance") {
+      inputName = argv[i+1];
+      i++;
+    } else if (arg == "--main::output_file") {
+      outputName = argv[i+1];
+      i++;
+    } else if (arg == "--main::seed") {
+      // doesn't use seed right now
+      i++;
+    } else if (arg == "--verbose" || arg == "-v") {
+      verbose = true;
+    } else {
+      inputName = arg;
     }
   }
 
@@ -105,6 +105,19 @@ int main(int argc, const char* argv[]) {
   }
   auto timeAfter = std::chrono::system_clock::now();
   std::chrono::nanoseconds timeSpent = timeAfter-timeBefore;
-  cout << state;
-  cout << "Time: " << static_cast<double>(timeSpent.count())/1e9 << std::endl;
+  std::ofstream fileStream;
+  cout << "OUTPUT NAME: " << outputName << endl;
+  if (outputName != "") {
+    fileStream.open(outputName.c_str(), std::ios::out);
+    if (!fileStream) {
+      std::cerr << "Cannot open file " << outputName << endl;
+      exit(1);
+    }
+  }
+  std::ostream& outputStream = (outputName == "" ? cout : fileStream);
+  outputStream << state;
+  outputStream << "Time: " << static_cast<double>(timeSpent.count())/1e9 << std::endl;
+  if (outputName != "") {
+    fileStream.close();
+  }
 }

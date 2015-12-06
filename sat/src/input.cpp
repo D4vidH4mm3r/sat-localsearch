@@ -3,14 +3,13 @@
 #include <sstream>
 #include "input.h"
 
-using std::ifstream;
 
 SATInput::SATInput(string file_name) :
   formula(),
   posInClause(0),
   negInClause(0)
 {
-  ifstream filestream(file_name.c_str());
+  std::ifstream filestream(file_name.c_str());
   if (!filestream) {
     std::cerr << "Cannot open file " << file_name << std::endl;
     exit(1);
