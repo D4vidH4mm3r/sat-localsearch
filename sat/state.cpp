@@ -8,7 +8,6 @@ SATState::SATState(SATInput* input, int starttype) :
   inst(input->numLiterals),
   numSatisfied(0),
   numFailed(input->numClauses),
-  literalInClauses(input->numLiterals, vector<int>(0)),
   numSatisfying(input->numClauses, 0) {
   // initialize some instantiation
   if (starttype == 0) {
@@ -20,20 +19,6 @@ SATState::SATState(SATInput* input, int starttype) :
     }
   } else {
     throw "Unknown start type";
-  }
-  int clauseNum = 1;
-  for (Clause clause : input->formula) {
-    for (int lit : clause) {
-      // put lit -> clause in map also
-      if (lit > 0) {
-        int litIndex = lit - 1;
-        literalInClauses[litIndex].push_back(clauseNum);
-      } else {
-        int litIndex = -lit - 1;
-        literalInClauses[litIndex].push_back(-clauseNum);
-      }
-    }
-    clauseNum++;
   }
   // compute what is failed and so on
   recomputeFailed(false);
@@ -74,7 +59,7 @@ void SATState::recomputeFailed(bool zeroOut) {
 int SATState::flipDelta(int literal) {
   int res = 0;
   bool valAfterFlip = !inst[literal-1];
-  for (int clause : literalInClauses[literal-1]) {
+  for (int clause : input->literalInClauses[literal-1]) {
     if (clause > 0) {
       int clauseIndex = clause - 1;
       if (numSatisfying[clauseIndex] == 0) {
@@ -106,7 +91,7 @@ void SATState::flip(int literal) {
   bool valAfterFlip = !inst[literal-1];
   inst[literal-1] = valAfterFlip;
   // update counts and auxilliary structures
-  for (int clause : literalInClauses[literal-1]) {
+  for (int clause : input->literalInClauses[literal-1]) {
     int clauseIndex;
     if (clause > 0) {
       clauseIndex = clause - 1;
