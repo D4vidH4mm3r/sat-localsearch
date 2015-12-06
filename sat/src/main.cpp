@@ -4,6 +4,7 @@
 #include <ctime>
 #include <fstream>
 #include <random>
+#include <math.h>
 #include <iostream>
 #include "input.h"
 #include "state.h"
@@ -55,8 +56,13 @@ int main(int argc, const char* argv[]) {
   // do some search
   std::random_device randDev;
   std::minstd_rand randGen(randDev());
-  std::uniform_int_distribution<int> randDist(0, 0);
-  for (int j=0; j<10000; j++) {
+  std::uniform_int_distribution<int> randLit(1, input->numLiterals);
+  std::uniform_real_distribution<double> randReal(0.0, 1.0);
+  unsigned long iterMax = input->numClauses*input->numClauses;
+  double Tmax = static_cast<double>(iterMax);
+  double T = Tmax;
+  // TODO: experiment with number of steps and temperatures
+  for (unsigned long j=0; j<=iterMax; j++) {
 
     if (state.cost == 0) {
       if (verbose) {
@@ -65,43 +71,23 @@ int main(int argc, const char* argv[]) {
       break;
     }
 
-    // choose randomly a failed clause
-    randDist.param(std::uniform_int_distribution<int>::param_type(0, state.cost-1));
-    int chooseNumber = randDist(randGen);
-    int randomFailing;
-    vector<int>::iterator failingClause;
-    if (verbose) {
-      cout << "Looking for the " << chooseNumber << "th failed" << endl;
+    // choose randomly a literal to maybe flip
+    int literal = randLit(randGen);
+    int delta = state.flipDelta(literal);
+    if (delta <= 0) {
+      state.flip(literal);
+      T = T * 0.95;
+      continue;
     }
-    {
-      int count = 0;
-      failingClause = std::find_if(state.numSatisfying.begin(), state.numSatisfying.end(), [&] (int const n) {
-          if (n == 0) {
-            if (count == chooseNumber) {
-              return true;
-            }
-            count++;
-          }
-          return false;
-        });
-      randomFailing = std::distance(state.numSatisfying.begin(), failingClause);
+    // random cutoff
+    double cutoff = randReal(randGen);
+    double P = 2.0/(1 + exp(static_cast<double>(delta)/T));
+    if (P > cutoff) {
+      state.flip(literal);
     }
 
-    // find the best literal to flip in this clause
-    int bestDelta = input->numClauses+1;
-    int bestFlip = -1;
-    for (int lit : input->formula[randomFailing]) {
-      int absLit = lit>0 ? lit : -lit;
-      int delta = state.flipDelta(absLit);
-      if (delta < bestDelta) {
-        bestDelta = delta;
-        bestFlip = absLit;
-      }
-    }
-    if (verbose) {
-      cout << "Best literal to flip here is " << bestFlip << " (gives Δ=" << bestDelta << ")" << endl;
-    }
-    state.flip(bestFlip);
+    // TODO: experiment with temperature distribution
+    T = T * 0.95;
   }
   auto timeAfter = std::chrono::system_clock::now();
   std::chrono::nanoseconds timeSpent = timeAfter-timeBefore;
