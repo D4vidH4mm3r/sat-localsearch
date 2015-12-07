@@ -63,6 +63,7 @@ int main(int argc, const char* argv[]) {
       }
       bestState = state;
     }
+    state.randomize();
     if (bestState.cost == 0) {
       break;
     }

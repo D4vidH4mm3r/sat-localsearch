@@ -30,6 +30,16 @@ SATState::SATState(const SATState& state) :
   numSatisfying(state.numSatisfying) {
 }
 
+void SATState::randomize() {
+  std::random_device randDev;
+  std::minstd_rand randGen(randDev());
+  std::uniform_int_distribution<int> randDist(0, 1);
+  for (unsigned int i=0; i<inst.size(); i++) {
+    inst[i] = randDist(randGen);
+  }
+  recomputeFailed(true);
+}
+
 void SATState::recomputeFailed(bool zeroOut) {
   if (zeroOut) {
     cost = input->numClauses;
