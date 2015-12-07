@@ -1,19 +1,22 @@
 #+TITLE: Local search for SAT
+#+LATEX_HEADER: \usepackage{algpseudocode}
+
+* The problem
+The decision version of a satisfiability problem is: Given a formula $F$ consisting of $m$ clauses in which $n$ literals appear, does there exist an assignment (true or false) to the literal such that the formula becomes true?
+Here we assume that the formula is in conjunctive normal form (terms in clauses are connected with disjunctions and all clauses are connected with conjunctions).
+An optimization version is to find an assignment of truth values to the literals which maximizes the number of satisfied clauses---this is what the local search algorithm presented here will do.
 
 * Algorithm
 
-** Neighbourhood
-The neighbourhoods examined by the search are one-exchange neighbourhoods, so the neighbourhood function is:
+** Neighbourhoods
+The neighbourhoods examined by the search are one-exchange neighbourhoods.
+As booleans can only take two different values, this means that a neighbour $s'$ of $s$ has the value of one literal flipped; the neighbourhood function is:
 \begin{equation*}
-<v_1, v_2, \dots, v_k, v_{k+1}, \dots, v_m> \mapsto
-\left\{<v_1, v_2, \dots, \neg v_k, v_{k+1}, \dots, v_m>\ \mid\ k \in \{1, 2, \dots, m\}\right\}
+<v_1, v_2, \dots, v_k, v_{k+1}, \dots, v_n> \mapsto
+\left\{<v_1, v_2, \dots, \neg v_k, v_{k+1}, \dots, v_n>\ \mid\ k \in \{1, 2, \dots, n\}\right\}
 \end{equation*}
-
-** Search strategy
-The search employed is simulated annealing.
-Starting from a random state and a high "temperature", the search proceeds by choosing randomly a literal to flip.
-If flipping the literal will give a non-negative delta, the move is made.
-Otherwise, it may still happen---this is decided by a probabilistic function which takes into account how much the move will worsen the cost (the worse the move, the less likely it is to be made) and the temperature (higher temperatures make bad moves more likely).
+Where $<v_1, v_2, \dots, v_n>$ denotes an instantiation giving values to the literals.
+The size of the neighbourhood is $n-1$.
 
 ** Delta computation
 Two static data structures are used to quickly find the clauses which are relevant for some literal $j$:
@@ -21,8 +24,48 @@ Two static data structures are used to quickly find the clauses which are releva
 C(x_j) &= \{c_i\ \mid\ x_j \text{ appears (not negated) in } c_i \} \\
 \overline{C}(x_j) &= \{c_i\ \mid\ x_j \text{ appears negated in } c_i \}
 \end{align*}
+These two sets are implemented using vectors (index $i$ contains vector for clause $i$ which has indices for literals) and they take up $O(n)$ space and take $O(km)$ time to initialize (where $k$ is the maximum number of literals in a clause).
+
 Additionally, a dynamic structure is used to keep track of how many of the literals in the different clauses are curently true (status criticality for each clause):
 \begin{equation*}
-n_i = \left| \left\{ x_j\ \mid\ x_j \in C_i \wedge x_j \right\} \cup
+s_i = \left| \left\{ x_j\ \mid\ x_j \in C_i \wedge x_j \right\} \cup
 \left\{ x_j\ \mid\ \overline{x_j} \in C_i \wedge \overline{x_j} \right\} \right|
 \end{equation*}
+This structure is also implemented as a vector.
+It takes up $O(m)$ space and it takes $O(km)$ time to initialize.
+
+Computing the delta for a flip is done by looking at all the clauses in which the literal which one considers flipping.
+If, for some clause $C$, the value $s_C=0$, we know for sure that flipping a literal in this clause will change it from unsatisfied to satisfied (and so $\Delta$ is decremented).
+If $s_C=1$, there are four cases to consider:
+|                         | $l$ is true             | $l$ is false            |
+|-------------------------+-------------------------+-------------------------|
+| $C \in C(l)$            | $\Delta \gets \Delta+1$ | nothing happens         |
+| $C \in \overline{C(l)}$ | nothing happens         | $\Delta \gets \Delta+1$ |
+We know that if $l$ appears positively (non-negated) in $C$ and there is currently only one literal satisfying $C$, then it is $l$ and flipping it would cause the clause to be unsatisfied.
+
+Literals may appear in any clauses, so we may need to check all $m$ clauses and so the delta computation takes $O(m)$ time.
+When performing the flip, the value of some literal is negated ($O(1)$) and each clause the literal appears in is looked at ($O(m)$ again) and the counter $s_C$ for the clause is updated (incremented or decremented).
+Therefore, making a step takes $O(m)$ time.
+
+** Search strategy
+The search employed is min-conflict resolution combined with random walk (a crude implementation of simulated annealing is also included in the source code, but min-conflict resolution is used by default).
+Starting from a random state, the search proceeds as follows:
+
+#+BEGIN_LaTeX
+\begin{algorithmic}
+  \State $V \gets$ random assignment of truth values to each of the $n$ literals
+  \For{$i = 1$ to maxIter}
+    \If{$\text{\#conflicts}=0$}
+      \State \Return
+    \EndIf
+    \State $C \gets$ uniformly randomly chosen currently unsatisfied clause
+    \State $r \gets$ uniformly random real number $\in [0, 1]$
+    \If{$r < wp$}
+      \State $l \gets$ uniformly randomly chosen literal appearing in $C$
+    \Else
+      \State $l \gets \text{argmin}_{l \in C} \Delta l$
+    \EndIf
+    \State $V \gets V$ with $l = \neg l$
+  \EndFor
+\end{algorithmic}
+#+END_LaTeX
