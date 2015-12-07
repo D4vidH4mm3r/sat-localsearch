@@ -5,6 +5,6 @@
 #include "state.h"
 
 
-void anneal(SATState&, std::minstd_rand, bool);
+void anneal(SATState& state, SATState& best, std::minstd_rand randGen, bool verbose);
 
 #endif

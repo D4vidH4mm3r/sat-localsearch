@@ -56,13 +56,7 @@ int main(int argc, const char* argv[]) {
   std::random_device randDev;
   std::minstd_rand randGen(randDev());
   for (int i=0; i<5; i++) {
-    anneal(state, randGen, verbose);
-    if (state.cost < bestState.cost) {
-      if (verbose) {
-        cout << "Better state (" << state.cost << " vs. " << bestState.cost << ") found" << endl;
-      }
-      bestState = state;
-    }
+    anneal(state, bestState, randGen, verbose);
     state.randomize();
     if (bestState.cost == 0) {
       break;
@@ -80,7 +74,7 @@ int main(int argc, const char* argv[]) {
     }
   }
   std::ostream& outputStream = (outputName == "" ? cout : fileStream);
-  outputStream << state;
+  outputStream << bestState;
   outputStream << "Time: " << static_cast<double>(timeSpent.count())/1e9 << std::endl;
   if (outputName != "") {
     fileStream.close();
