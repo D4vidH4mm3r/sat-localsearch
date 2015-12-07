@@ -5,7 +5,7 @@ using std::cout;
 using std::endl;
 
 
-void anneal(SATState& state, SATState& bestState, std::minstd_rand randGen, bool verbose) {
+void anneal(SATState state, SATState& bestState, std::minstd_rand& randGen, bool verbose, std::mutex& mtx) {
   std::uniform_int_distribution<int> randLit(1, state.input->numLiterals);
   std::uniform_real_distribution<double> randReal(0.0, 1.0);
   unsigned long iterMax = state.input->numClauses*state.input->numClauses;
@@ -40,9 +40,11 @@ void anneal(SATState& state, SATState& bestState, std::minstd_rand randGen, bool
     T = T * 0.95;
   }
   if (state.cost < bestState.cost) {
+    mtx.lock();
     if (verbose) {
       cout << "Better state (" << state.cost << " vs. " << bestState.cost << ") found" << endl;
     }
     bestState = state;
+    mtx.unlock();
   }
 }

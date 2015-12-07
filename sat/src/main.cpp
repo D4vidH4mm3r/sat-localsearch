@@ -3,6 +3,7 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
+#include <thread>
 #include "input.h"
 #include "state.h"
 #include "search.h"
@@ -10,6 +11,7 @@
 
 using std::cout;
 using std::endl;
+using std::thread;
 
 int main(int argc, const char* argv[]) {
   bool verbose = false;
@@ -55,12 +57,14 @@ int main(int argc, const char* argv[]) {
   // do some search
   std::random_device randDev;
   std::minstd_rand randGen(randDev());
-  for (int i=0; i<5; i++) {
-    anneal(state, bestState, randGen, verbose);
+  vector<thread> threads;
+  std::mutex mtx;
+  for (int i=0; i<4; i++) {
     state.randomize();
-    if (bestState.cost == 0) {
-      break;
-    }
+    threads.push_back(thread(anneal, state, std::ref(bestState), std::ref(randGen), verbose, std::ref(mtx)));
+  }
+  for (auto& th : threads) {
+    th.join();
   }
 
   auto timeAfter = std::chrono::system_clock::now();
