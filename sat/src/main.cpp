@@ -1,6 +1,7 @@
 #include <cassert>
 #include <chrono>
 #include <fstream>
+#include <future>
 #include <iostream>
 #include <sstream>
 #include <thread>
@@ -28,14 +29,14 @@ int main(int argc, const char* argv[]) {
       if (arg == "--main::instance") {
         inputName = argv[i+1];
         i++;
-      } else if (arg == "--main::output_file") {
+      } else if (arg == "--main::output_file" || arg == "-o") {
         outputName = argv[i+1];
         i++;
-      } else if (arg == "--main::seed") {
+      } else if (arg == "--main::seed" || arg == "-s") {
         iss.str(argv[i+1]);
         iss >> randSeed;
         i++;
-      } else if (arg == "--search::strategy" || arg == "-s") {
+      } else if (arg == "--search::strategy" || arg == "-ss") {
         iss.str(argv[i+1]);
         iss >> searchStrategy;
         i++;
@@ -48,6 +49,7 @@ int main(int argc, const char* argv[]) {
       } else {
         inputName = arg;
       }
+      iss.clear();
     }
   }
 
@@ -58,9 +60,12 @@ int main(int argc, const char* argv[]) {
     cout << input->numClauses << " clauses" << endl;;
   }
 
+  // initialize random generator
+  std::minstd_rand randGen(randSeed);
+
   auto timeBefore = std::chrono::system_clock::now();
   // initialize state
-  State state(input, 0);
+  State state(input, randGen);
   State bestState = state;
   int numSatisfied = input->numClauses - state.cost;
   if (verbose) {
@@ -70,7 +75,6 @@ int main(int argc, const char* argv[]) {
   }
 
   // do some search
-  std::minstd_rand randGen(randSeed);
   int numThreads = std::thread::hardware_concurrency();
   vector<std::future<State> > futures(numThreads);
   int attempts = 0;
@@ -91,9 +95,9 @@ int main(int argc, const char* argv[]) {
       if (res.cost < bestState.cost) {
         bestState = res;
       }
-    }
-    if (bestState.cost == 0) {
-      break;
+      if (bestState.cost == 0) {
+        goto done_searching;
+      }
     }
     // estimate whether we have time to try again
     attempts++;
@@ -103,8 +107,8 @@ int main(int argc, const char* argv[]) {
     if (timeSpent + 1.5*timePerAttempt > timeout) {
       break;
     }
-
   }
+ done_searching:
 
   auto timeAfter = std::chrono::system_clock::now();
   double timeSpent = static_cast<double>((timeAfter-timeBefore).count())/1e9;

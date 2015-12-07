@@ -1,10 +1,11 @@
 #ifndef _H_STATE
 #define _H_STATE
 #include "input.h"
+#include <random>
 
 class State {
  public:
-  State(Input*, int);
+  State(Input*, std::minstd_rand& randGen);
   State(const State&);
   Input* input;
   Instantiation inst;

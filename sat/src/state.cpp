@@ -3,21 +3,15 @@
 #include <random>
 #include "state.h"
 
-State::State(Input* input, int starttype) :
+State::State(Input* input, std::minstd_rand& randGen) :
   input(input),
   inst(input->numLiterals),
   cost(input->numClauses),
   numSatisfying(input->numClauses, 0) {
   // initialize some instantiation
-  if (starttype == 0) {
-    std::random_device randDev;
-    std::minstd_rand randGen(randDev());
-    std::uniform_int_distribution<int> randDist(0, 1);
-    for (unsigned int i=0; i<inst.size(); i++) {
-      inst[i] = randDist(randGen);
-    }
-  } else {
-    throw "Unknown start type";
+  std::uniform_int_distribution<int> randDist(0, 1);
+  for (unsigned int i=0; i<inst.size(); i++) {
+    inst[i] = randDist(randGen);
   }
   // compute what is failed and so on
   recomputeFailed(false);
