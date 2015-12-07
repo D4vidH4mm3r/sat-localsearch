@@ -7,6 +7,6 @@
 #include "state.h"
 
 
-SATState anneal(SATState initial, std::minstd_rand& randGen, bool verbose);
+State anneal(State initial, std::minstd_rand& randGen, bool verbose);
 
 #endif

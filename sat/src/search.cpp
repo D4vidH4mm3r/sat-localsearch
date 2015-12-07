@@ -5,7 +5,7 @@ using std::cout;
 using std::endl;
 
 
-SATState anneal(SATState state, std::minstd_rand& randGen, bool verbose) {
+State anneal(State state, std::minstd_rand& randGen, bool verbose) {
   std::uniform_int_distribution<int> randLit(1, state.input->numLiterals);
   std::uniform_real_distribution<double> randReal(0.0, 1.0);
   unsigned long iterMax = state.input->numClauses*state.input->numClauses;

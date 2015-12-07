@@ -4,7 +4,7 @@
 #include "input.h"
 
 
-SATInput::SATInput(string file_name) :
+Input::Input(string file_name) :
   formula(),
   posInClause(0),
   negInClause(0)

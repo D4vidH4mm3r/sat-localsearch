@@ -48,7 +48,7 @@ int main(int argc, const char* argv[]) {
   }
 
   // read instance
-  SATInput* input = new SATInput(inputName);
+  Input* input = new Input(inputName);
   if (verbose) {
     cout << "Read instance with " << input->numLiterals << " literals and ";
     cout << input->numClauses << " clauses" << endl;;
@@ -56,8 +56,8 @@ int main(int argc, const char* argv[]) {
 
   auto timeBefore = std::chrono::system_clock::now();
   // initialize state
-  SATState state(input, 0);
-  SATState bestState = state;
+  State state(input, 0);
+  State bestState = state;
   int numSatisfied = input->numClauses - state.cost;
   if (verbose) {
     cout << "Random instance satisfied " << numSatisfied << " and failed " << state.cost << endl;
@@ -69,7 +69,7 @@ int main(int argc, const char* argv[]) {
   std::minstd_rand randGen;
   randGen.seed(1);
   int numThreads = std::thread::hardware_concurrency();
-  vector<std::future<SATState> > futures(numThreads);
+  vector<std::future<State> > futures(numThreads);
   int attempts = 0;
   // TODO: better thread pooling?
   while (true) {
@@ -78,7 +78,7 @@ int main(int argc, const char* argv[]) {
       futures[i] = std::async(std::launch::async, anneal, state, ref(randGen), verbose);
     }
     for (auto& future : futures) {
-      SATState res = future.get();
+      State res = future.get();
       if (res.cost < bestState.cost) {
         bestState = res;
       }

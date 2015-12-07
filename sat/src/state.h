@@ -2,11 +2,11 @@
 #define _H_STATE
 #include "input.h"
 
-class SATState {
+class State {
  public:
-  SATState(SATInput*, int);
-  SATState(const SATState&);
-  SATInput* input;
+  State(Input*, int);
+  State(const State&);
+  Input* input;
   Instantiation inst;
   int cost; // number of failed clauses
   // element i = (sign)j indicates that literal i appears with sign in clause j
@@ -19,5 +19,5 @@ class SATState {
   void recomputeFailed(bool zeroOut);
 };
 
-std::ostream& operator<<(std::ostream& os, const SATState& s);
+std::ostream& operator<<(std::ostream& os, const State& s);
 #endif

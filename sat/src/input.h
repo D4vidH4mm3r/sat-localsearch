@@ -10,14 +10,14 @@ typedef vector<int> Clause;
 typedef vector<Clause> Formula;
 typedef vector<bool> Instantiation;
 
-class SATInput {
+class Input {
  public:
   int numClauses;
   int numLiterals;
   Formula formula;
   vector<vector<int> > posInClause;
   vector<vector<int> > negInClause;
-  SATInput(string fileName);
+  Input(string fileName);
 };
 
 std::ostream& operator<<(std::ostream& os, const Clause& c);

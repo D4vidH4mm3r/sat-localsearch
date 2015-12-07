@@ -3,7 +3,7 @@
 #include <random>
 #include "state.h"
 
-SATState::SATState(SATInput* input, int starttype) :
+State::State(Input* input, int starttype) :
   input(input),
   inst(input->numLiterals),
   cost(input->numClauses),
@@ -23,14 +23,14 @@ SATState::SATState(SATInput* input, int starttype) :
   recomputeFailed(false);
 }
 
-SATState::SATState(const SATState& state) :
+State::State(const State& state) :
   input(state.input),
   inst(state.inst),
   cost(state.cost),
   numSatisfying(state.numSatisfying) {
 }
 
-void SATState::randomize() {
+void State::randomize() {
   std::random_device randDev;
   std::minstd_rand randGen(randDev());
   std::uniform_int_distribution<int> randDist(0, 1);
@@ -40,7 +40,7 @@ void SATState::randomize() {
   recomputeFailed(true);
 }
 
-void SATState::recomputeFailed(bool zeroOut) {
+void State::recomputeFailed(bool zeroOut) {
   if (zeroOut) {
     cost = input->numClauses;
     std::fill(numSatisfying.begin(), numSatisfying.end(), 0);
@@ -70,7 +70,7 @@ void SATState::recomputeFailed(bool zeroOut) {
   }
 }
 
-int SATState::flipDelta(int literal) {
+int State::flipDelta(int literal) {
   int res = 0;
   bool valAfterFlip = !inst[literal-1];
   int litIndex = literal-1;
@@ -99,13 +99,13 @@ int SATState::flipDelta(int literal) {
   return res;
 }
 
-void SATState::flip_slow(int literal) {
+void State::flip_slow(int literal) {
   inst[literal-1] = !inst[literal-1];
   // update counts and auxilliary structures
   recomputeFailed(true);
 }
 
-void SATState::flip(int literal) {
+void State::flip(int literal) {
   bool valAfterFlip = !inst[literal-1];
   inst[literal-1] = valAfterFlip;
   // update counts and auxilliary structures
@@ -144,7 +144,7 @@ void SATState::flip(int literal) {
   }
 }
 
-std::ostream& operator<<(std::ostream& os, const SATState& s) {
+std::ostream& operator<<(std::ostream& os, const State& s) {
   os << "v:";
   int litNum = 1;
   for (bool val : s.inst) {
