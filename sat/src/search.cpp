@@ -31,7 +31,7 @@ SATState anneal(SATState state, std::minstd_rand& randGen, bool verbose) {
     }
     // random cutoff
     double cutoff = randReal(randGen);
-    double P = 2.0/(1 + exp(static_cast<double>(delta)/T));
+    double P = exp(static_cast<double>(-delta)/T);
     if (P > cutoff) {
       state.flip(literal);
     }
