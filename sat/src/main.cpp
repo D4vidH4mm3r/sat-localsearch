@@ -3,6 +3,7 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <thread>
 #include "input.h"
 #include "state.h"
@@ -18,21 +19,26 @@ int main(int argc, const char* argv[]) {
   // read parameters for program
   string inputName = "../data/uf20-010.cnf";
   string outputName = "";
-  for (int i=1; i<argc; i++) {
-    string arg = argv[i];
-    if (arg == "--main::instance") {
-      inputName = argv[i+1];
-      i++;
-    } else if (arg == "--main::output_file") {
-      outputName = argv[i+1];
-      i++;
-    } else if (arg == "--main::seed") {
-      // doesn't use seed right now
-      i++;
-    } else if (arg == "--verbose" || arg == "-v") {
-      verbose = true;
-    } else {
-      inputName = arg;
+  int randSeed = 1;
+  {
+    std::istringstream iss;
+    for (int i=1; i<argc; i++) {
+      string arg = argv[i];
+      if (arg == "--main::instance") {
+        inputName = argv[i+1];
+        i++;
+      } else if (arg == "--main::output_file") {
+        outputName = argv[i+1];
+        i++;
+      } else if (arg == "--main::seed") {
+        iss.str(argv[i+1]);
+        iss >> randSeed;
+        i++;
+      } else if (arg == "--verbose" || arg == "-v") {
+        verbose = true;
+      } else {
+        inputName = arg;
+      }
     }
   }
 
@@ -55,8 +61,8 @@ int main(int argc, const char* argv[]) {
   }
 
   // do some search
-  std::random_device randDev;
-  std::minstd_rand randGen(randDev());
+  std::minstd_rand randGen;
+  randGen.seed(1);
   vector<thread> threads;
   std::mutex mtx;
   for (int i=0; i<4; i++) {
