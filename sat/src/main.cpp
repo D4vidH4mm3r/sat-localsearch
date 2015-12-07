@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <cassert>
 #include <chrono>
 #include <fstream>
@@ -20,6 +19,7 @@ int main(int argc, const char* argv[]) {
   string inputName = "../data/uf20-010.cnf";
   string outputName = "";
   int randSeed = 1;
+  int searchStrategy = 0; // 0 for min-conflict, 1 for simulated annealing
   double timeout = 20.0;
   {
     std::istringstream iss;
@@ -34,6 +34,10 @@ int main(int argc, const char* argv[]) {
       } else if (arg == "--main::seed") {
         iss.str(argv[i+1]);
         iss >> randSeed;
+        i++;
+      } else if (arg == "--search::strategy" || arg == "-s") {
+        iss.str(argv[i+1]);
+        iss >> searchStrategy;
         i++;
       } else if (arg == "--main::timeout" || arg == "-t") {
         iss.str(argv[i+1]);
@@ -66,8 +70,7 @@ int main(int argc, const char* argv[]) {
   }
 
   // do some search
-  std::minstd_rand randGen;
-  randGen.seed(1);
+  std::minstd_rand randGen(randSeed);
   int numThreads = std::thread::hardware_concurrency();
   vector<std::future<State> > futures(numThreads);
   int attempts = 0;
@@ -75,7 +78,13 @@ int main(int argc, const char* argv[]) {
   while (true) {
     for (int i=0; i<numThreads; i++) {
       state.randomize();
-      futures[i] = std::async(std::launch::async, anneal, state, ref(randGen), verbose);
+      if (searchStrategy == 0) {
+        futures[i] = std::async(std::launch::async, minConflict, state, ref(randGen));
+      } else if (searchStrategy == 1) {
+        futures[i] = std::async(std::launch::async, anneal, state, ref(randGen), verbose);
+      } else {
+        throw "Unknown search type (only have 0 for min-conflict and 1 for annealing)";
+      }
     }
     for (auto& future : futures) {
       State res = future.get();
