@@ -16,3 +16,13 @@ If flipping the literal will give a non-negative delta, the move is made.
 Otherwise, it may still happen---this is decided by a probabilistic function which takes into account how much the move will worsen the cost (the worse the move, the less likely it is to be made) and the temperature (higher temperatures make bad moves more likely).
 
 ** Delta computation
+Two static data structures are used to quickly find the clauses which are relevant for some literal $j$:
+\begin{align*}
+C(x_j) &= \{c_i\ \mid\ x_j \text{ appears (not negated) in } c_i \} \\
+\overline{C}(x_j) &= \{c_i\ \mid\ x_j \text{ appears negated in } c_i \}
+\end{align*}
+Additionally, a dynamic structure is used to keep track of how many of the literals in the different clauses are curently true (status criticality for each clause):
+\begin{equation*}
+n_i = \left| \left\{ x_j\ \mid\ x_j \in C_i \wedge x_j \right\} \cup
+\left\{ x_j\ \mid\ \overline{x_j} \in C_i \wedge \overline{x_j} \right\} \right|
+\end{equation*}
