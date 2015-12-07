@@ -24,9 +24,7 @@ State::State(const State& state) :
   numSatisfying(state.numSatisfying) {
 }
 
-void State::randomize() {
-  std::random_device randDev;
-  std::minstd_rand randGen(randDev());
+void State::randomize(std::minstd_rand& randGen) {
   std::uniform_int_distribution<int> randDist(0, 1);
   for (unsigned int i=0; i<inst.size(); i++) {
     inst[i] = randDist(randGen);

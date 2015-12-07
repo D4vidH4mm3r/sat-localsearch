@@ -81,7 +81,7 @@ int main(int argc, const char* argv[]) {
   // TODO: better thread pooling?
   while (true) {
     for (int i=0; i<numThreads; i++) {
-      state.randomize();
+      state.randomize(randGen);
       if (searchStrategy == 0) {
         futures[i] = std::async(std::launch::async, minConflict, state, ref(randGen));
       } else if (searchStrategy == 1) {

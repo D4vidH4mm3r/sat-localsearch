@@ -4,7 +4,7 @@
 #include "input.h"
 
 
-Input::Input(string file_name) :
+Input::Input(const string& file_name) :
   formula(),
   posInClause(0),
   negInClause(0)

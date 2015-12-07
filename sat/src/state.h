@@ -5,7 +5,7 @@
 
 class State {
  public:
-  State(Input*, std::minstd_rand& randGen);
+  State(Input*, std::minstd_rand&);
   State(const State&);
   Input* input;
   Instantiation inst;
@@ -14,7 +14,7 @@ class State {
   int flipDelta(int literal); // note: not 0-indexed
   void flip(int literal);
   void flip_slow(int literal);
-  void randomize();
+  void randomize(std::minstd_rand&);
   vector<int> numSatisfying;
  private:
   void recomputeFailed(bool zeroOut);

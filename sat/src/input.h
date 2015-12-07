@@ -17,7 +17,7 @@ class Input {
   Formula formula;
   vector<vector<int> > posInClause;
   vector<vector<int> > negInClause;
-  Input(string fileName);
+  Input(const string& fileName);
 };
 
 std::ostream& operator<<(std::ostream& os, const Clause& c);
