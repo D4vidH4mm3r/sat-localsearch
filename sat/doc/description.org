@@ -69,3 +69,8 @@ Starting from a random state, the search proceeds as follows:
   \EndFor
 \end{algorithmic}
 #+END_LaTeX
+
+The random $r$ enables the algorithm to go out of local optima; the algorithm will make a random flip with probability $wp$ (or make the best flip with probability $1-wp$).
+Selecting a random failing clause is currently done somewhat inefficiently in the implementation: as no sets of failed clauses are explicitly maintained, the vector representing $S$ is used instead.
+A random integer $l$ between $0$ and the number of failed clauses minus one is generated and clause number $l$ which has $s_C=0$ is chosen.
+This takes $O(m)$ time, but since this is already spent calculating the $\Delta$, this does not worsen the time to do a step asymptotically.
