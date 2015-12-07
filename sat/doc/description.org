@@ -1,0 +1,18 @@
+#+TITLE: Local search for SAT
+
+* Algorithm
+
+** Neighbourhood
+The neighbourhoods examined by the search are one-exchange neighbourhoods, so the neighbourhood function is:
+\begin{equation*}
+<v_1, v_2, \dots, v_k, v_{k+1}, \dots, v_m> \mapsto
+\left\{<v_1, v_2, \dots, \neg v_k, v_{k+1}, \dots, v_m>\ \mid\ k \in \{1, 2, \dots, m\}\right\}
+\end{equation*}
+
+** Search strategy
+The search employed is simulated annealing.
+Starting from a random state and a high "temperature", the search proceeds by choosing randomly a literal to flip.
+If flipping the literal will give a non-negative delta, the move is made.
+Otherwise, it may still happen---this is decided by a probabilistic function which takes into account how much the move will worsen the cost (the worse the move, the less likely it is to be made) and the temperature (higher temperatures make bad moves more likely).
+
+** Delta computation
