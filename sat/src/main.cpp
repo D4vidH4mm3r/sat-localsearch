@@ -12,7 +12,7 @@
 
 using std::cout;
 using std::endl;
-using std::thread;
+using std::ref;
 
 int main(int argc, const char* argv[]) {
   bool verbose = false;
@@ -63,14 +63,17 @@ int main(int argc, const char* argv[]) {
   // do some search
   std::minstd_rand randGen;
   randGen.seed(1);
-  vector<thread> threads;
-  std::mutex mtx;
-  for (int i=0; i<4; i++) {
+  int numThreads = std::thread::hardware_concurrency();
+  vector<std::future<SATState> > futures(numThreads);
+  for (int i=0; i<numThreads; i++) {
     state.randomize();
-    threads.push_back(thread(anneal, state, std::ref(bestState), std::ref(randGen), verbose, std::ref(mtx)));
+    futures[i] = std::async(std::launch::async, anneal, state, ref(randGen), verbose);
   }
-  for (auto& th : threads) {
-    th.join();
+  for (auto& future : futures) {
+    SATState res = future.get();
+    if (res.cost < bestState.cost) {
+      bestState = res;
+    }
   }
 
   auto timeAfter = std::chrono::system_clock::now();
@@ -89,5 +92,4 @@ int main(int argc, const char* argv[]) {
   if (outputName != "") {
     fileStream.close();
   }
-
 }
