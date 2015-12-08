@@ -1,6 +1,6 @@
-#include <algorithm>
 #include <iostream>
 #include "search.h"
+#include "util.h"
 
 using std::cout;
 using std::endl;
@@ -61,20 +61,11 @@ State minConflict(State state, std::minstd_rand& randGen, std::atomic<bool>& sto
       // choose randomly a failed clause
       randInt.param(std::uniform_int_distribution<int>::param_type(0, state.cost-1));
       int failedNumber = randInt(randGen);
-      int failedClauseIndex; // set here the index when found
-      {
-        int count = 0;
-        vector<int>::iterator failedClause = std::find_if(state.numSatisfying.begin(), state.numSatisfying.end(), [&] (int const n) {
-            if (n == 0) {
-              if (count == failedNumber) {
-                return true;
-              }
-              count++;
-            }
-            return false;
-          });
-        failedClauseIndex = std::distance(state.numSatisfying.begin(), failedClause);
-      }
+      vector<int>::iterator failedClause = nth_where(state.numSatisfying.begin(),
+                                                     state.numSatisfying.end(),
+                                                     failedNumber,
+                                                     [] (int const n) {return n==0;});
+      int failedClauseIndex = std::distance(state.numSatisfying.begin(), failedClause);
       const Clause& chosenClause = state.input->formula[failedClauseIndex];
       int flipLiteral = -1;
       if (randReal(randGen) < wp) {
