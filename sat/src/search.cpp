@@ -6,7 +6,7 @@ using std::cout;
 using std::endl;
 
 
-State anneal(State state, std::minstd_rand& randGen, bool verbose) {
+State anneal(State state, std::minstd_rand& randGen) {
   std::uniform_int_distribution<int> randLit(1, state.input->numLiterals);
   std::uniform_real_distribution<double> randReal(0.0, 1.0);
   unsigned long iterMax = state.input->numClauses*state.input->numClauses;
@@ -40,54 +40,66 @@ State anneal(State state, std::minstd_rand& randGen, bool verbose) {
   return state;
 }
 
-State minConflict(State state, std::minstd_rand& randGen) {
+State minConflict(State state, std::minstd_rand& randGen, std::atomic<bool>& stop) {
   std::uniform_int_distribution<int> randInt;
   std::uniform_real_distribution<double> randReal(0.0, 1.0);
   unsigned long iterMax = state.input->numLiterals*state.input->numClauses;
   // TODO: tweak - though it seems pretty good actually
   double wp = 0.2; // probability to flip random instead of best
+  State best = state;
 
-  for (unsigned long i=0; i<iterMax; i++) {
+  while (true) { // run until stopped
+    for (unsigned long i=0; i<iterMax; i++) {
 
-    if (state.cost == 0) {
-      return state;
-    }
+      if (state.cost == 0) {
+        stop = true;
+        return state;
+      } else if (stop) {
+        return best.cost < state.cost ? best : state;
+      }
 
-    // choose randomly a failed clause
-    randInt.param(std::uniform_int_distribution<int>::param_type(0, state.cost-1));
-    int failedNumber = randInt(randGen);
-    int failedClauseIndex; // set here the index when found
-    {
-      int count = 0;
-      vector<int>::iterator failedClause = std::find_if(state.numSatisfying.begin(), state.numSatisfying.end(), [&] (int const n) {
-          if (n == 0) {
-            if (count == failedNumber) {
-              return true;
+      // choose randomly a failed clause
+      randInt.param(std::uniform_int_distribution<int>::param_type(0, state.cost-1));
+      int failedNumber = randInt(randGen);
+      int failedClauseIndex; // set here the index when found
+      {
+        int count = 0;
+        vector<int>::iterator failedClause = std::find_if(state.numSatisfying.begin(), state.numSatisfying.end(), [&] (int const n) {
+            if (n == 0) {
+              if (count == failedNumber) {
+                return true;
+              }
+              count++;
             }
-            count++;
+            return false;
+          });
+        failedClauseIndex = std::distance(state.numSatisfying.begin(), failedClause);
+      }
+      const Clause& chosenClause = state.input->formula[failedClauseIndex];
+      int flipLiteral = -1;
+      if (randReal(randGen) < wp) {
+        randInt.param(std::uniform_int_distribution<int>::param_type(0, chosenClause.size()-1));
+        flipLiteral = chosenClause[randInt(randGen)];
+        flipLiteral = flipLiteral > 0 ? flipLiteral : -flipLiteral;
+      } else {
+        int bestDelta = state.input->numClauses+1;
+        for (int lit : chosenClause) {
+          int absLit = lit > 0 ? lit : -lit;
+          int delta = state.flipDelta(absLit);
+          if (delta<bestDelta) {
+            bestDelta = delta;
+            flipLiteral = absLit;
           }
-          return false;
-        });
-      failedClauseIndex = std::distance(state.numSatisfying.begin(), failedClause);
-    }
-    const Clause& chosenClause = state.input->formula[failedClauseIndex];
-    int flipLiteral = -1;
-    if (randReal(randGen) < wp) {
-      randInt.param(std::uniform_int_distribution<int>::param_type(0, chosenClause.size()-1));
-      flipLiteral = chosenClause[randInt(randGen)];
-      flipLiteral = flipLiteral > 0 ? flipLiteral : -flipLiteral;
-    } else {
-      int bestDelta = state.input->numClauses+1;
-      for (int lit : chosenClause) {
-        int absLit = lit > 0 ? lit : -lit;
-        int delta = state.flipDelta(absLit);
-        if (delta<bestDelta) {
-          bestDelta = delta;
-          flipLiteral = absLit;
         }
       }
+      state.flip(flipLiteral);
     }
-    state.flip(flipLiteral);
+    if (best.cost > state.cost) {
+      best = state;
+    }
+    if (stop) {
+      return best;
+    }
+    state.randomize(randGen);
   }
-  return state;
 }
