@@ -1,5 +1,6 @@
 #+TITLE: Local search for SAT
 #+LATEX_HEADER: \usepackage{algpseudocode}
+#+OPTIONS: toc:nil
 
 * The problem
 The decision version of a satisfiability problem is: Given a formula $F$ consisting of $m$ clauses in which $n$ literals appear, does there exist an assignment (true or false) to the literal such that the formula becomes true?
@@ -34,7 +35,7 @@ s_i = \left| \left\{ x_j\ \mid\ x_j \in C_i \wedge x_j \right\} \cup
 This structure is also implemented as a vector.
 It takes up $O(m)$ space and it takes $O(km)$ time to initialize.
 
-Computing the delta for a flip is done by looking at all the clauses in which the literal which one considers flipping.
+Computing the delta (change in number of failed clauses) for a flip of a literal $l$ is done by looking at all the clauses in which $l$ appears.
 If, for some clause $C$, the value $s_C=0$, we know for sure that flipping a literal in this clause will change it from unsatisfied to satisfied (and so $\Delta$ is decremented).
 If $s_C=1$, there are four cases to consider:
 |                         | $l$ is true             | $l$ is false            |
@@ -43,12 +44,12 @@ If $s_C=1$, there are four cases to consider:
 | $C \in \overline{C(l)}$ | nothing happens         | $\Delta \gets \Delta+1$ |
 We know that if $l$ appears positively (non-negated) in $C$ and there is currently only one literal satisfying $C$, then it is $l$ and flipping it would cause the clause to be unsatisfied.
 
-Literals may appear in any clauses, so we may need to check all $m$ clauses and so the delta computation takes $O(m)$ time.
-When performing the flip, the value of some literal is negated ($O(1)$) and each clause the literal appears in is looked at ($O(m)$ again) and the counter $s_C$ for the clause is updated (incremented or decremented).
+Literals may appear in any clauses, so we may need to check all $m$ clauses meaning that the delta computation takes $O(m)$ time.
+When performing the flip, the value of the literal is negated ($O(1)$) and each clause the literal appears in is looked at ($O(m)$ again) and the counter $s_C$ for these clause is updated (incremented or decremented; this takes $O(1)$ for each of the $O(m)$ clauses).
 Therefore, making a step takes $O(m)$ time.
 
 ** Search strategy
-The search employed is min-conflict resolution combined with random walk (a crude implementation of simulated annealing is also included in the source code, but min-conflict resolution is used by default).
+The search employed is min-conflict resolution combined with random walk (a crude implementation of simulated annealing is also included in the source code, but min-conflict resolution is used by default as it currently performs the best).
 Starting from a random state, the search proceeds as follows:
 
 #+BEGIN_LaTeX
@@ -59,11 +60,11 @@ Starting from a random state, the search proceeds as follows:
       \State \Return
     \EndIf
     \State $C \gets$ uniformly randomly chosen currently unsatisfied clause
-    \State $r \gets$ uniformly random real number $\in [0, 1]$
+    \State $r \gets$ uniformly random real number $\in [0, 1)$
     \If{$r < wp$}
       \State $l \gets$ uniformly randomly chosen literal appearing in $C$
     \Else
-      \State $l \gets \text{argmin}_{l \in C} \Delta l$
+      \State $l \gets \text{argmin}_{l \in C} \Delta_{\text{flip}}(l)$
     \EndIf
     \State $V \gets V$ with $l = \neg l$
   \EndFor
@@ -71,6 +72,8 @@ Starting from a random state, the search proceeds as follows:
 #+END_LaTeX
 
 The random $r$ enables the algorithm to go out of local optima; the algorithm will make a random flip with probability $wp$ (or make the best flip with probability $1-wp$).
+Note that the implementation generates $r \in [0,1]$ rather than $[0,1)$ (this may make choosing the best flip ever so slightly more likely than $1-wp$).
+
 Selecting a random failing clause is currently done somewhat inefficiently in the implementation: as no sets of failed clauses are explicitly maintained, the vector representing $S$ is used instead.
-A random integer $l$ between $0$ and the number of failed clauses minus one is generated and clause number $l$ which has $s_C=0$ is chosen.
-This takes $O(m)$ time, but since this is already spent calculating the $\Delta$, this does not worsen the time to do a step asymptotically.
+A random integer $l$ between $0$ and the number of failed clauses minus one is generated and clause number $l$ (zero-indexed) which has $s_C=0$ is chosen.
+This takes $O(m)$ time, but since this is already spent calculating the $\Delta$ or making the update, this does not worsen the time to do a step asymptotically.
