@@ -137,7 +137,7 @@ void State::flip(int literal) {
 }
 
 std::ostream& operator<<(std::ostream& os, const State& s) {
-  os << "v:";
+  os << "v";
   int litNum = 1;
   for (bool val : s.inst) {
     if (val) {
