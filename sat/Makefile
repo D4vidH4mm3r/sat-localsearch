@@ -7,4 +7,4 @@ xyz:
 
 handin:
 	make clean
-	tar czvf sat.tgz src doc/description.pdf
+	tar czvf sat.tgz Makefile src doc/description.pdf

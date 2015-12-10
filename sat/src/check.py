@@ -41,7 +41,7 @@ for instance in sorted(datadir.iterdir()):
     inter = p.communicate()
     res = inter[0].decode("utf-8")
     line = res.partition("\n")[0]
-    for val in line.split(" ")[1:]:
+    for val in line.split(" ")[1:-1]:
         instantiation.append(int(val) > 0)
     assert len(instantiation) == numLits
 
