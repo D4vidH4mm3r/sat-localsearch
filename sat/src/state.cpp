@@ -148,6 +148,6 @@ std::ostream& operator<<(std::ostream& os, const State& s) {
     litNum++;
   }
   os << " 0" << std::endl << std::endl;
-  os << "Cost: " << s.cost << std::endl;
+  os << "c Cost: " << s.cost << std::endl;
   return os;
 }

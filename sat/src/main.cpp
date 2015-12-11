@@ -121,7 +121,7 @@ int main(int argc, const char* argv[]) {
   }
   std::ostream& outputStream = (outputName == "" ? cout : fileStream);
   outputStream << bestState;
-  outputStream << "Time: " << timeSpent << std::endl;
+  outputStream << "c Time: " << timeSpent << std::endl;
   if (outputName != "") {
     fileStream.close();
   }
