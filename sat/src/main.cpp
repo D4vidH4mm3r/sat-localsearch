@@ -102,7 +102,7 @@ int main(int argc, const char* argv[]) {
     if (searchStrategy == 0) {
       futures[i] = std::async(std::launch::async, minConflict, state, ref(randGen), ref(stop));
     } else if (searchStrategy == 1) {
-      futures[i] = std::async(std::launch::async, anneal, state, ref(randGen));
+      futures[i] = std::async(std::launch::async, anneal, state, ref(randGen), ref(stop));
     } else {
       throw "Unknown search type (only have 0 for min-conflict and 1 for annealing)";
     }

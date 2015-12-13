@@ -1,3 +1,4 @@
+#include <cmath>
 #include <iostream>
 #include "search.h"
 #include "util.h"
@@ -6,35 +7,59 @@ using std::cout;
 using std::endl;
 
 
-State anneal(State state, std::minstd_rand& randGen) {
+State anneal(State state, std::minstd_rand& randGen, std::atomic<bool>& stop) {
   std::uniform_int_distribution<int> randLit(1, state.input->numLiterals);
   std::uniform_real_distribution<double> randReal(0.0, 1.0);
-  unsigned long iterMax = state.input->numClauses*state.input->numClauses;
-  double Tmax = static_cast<double>(iterMax);
-  double T = Tmax;
   // TODO: experiment with number of steps and temperatures
-  for (unsigned long j=0; j<=iterMax; j++) {
+  // TODO: experiment with temperature distribution
+  unsigned stepsPerTemperature = state.input->numLiterals * (state.input->numLiterals-1);
+  unsigned accepted = 0;
+  unsigned rejected = 0;
+  unsigned stepsWithoutImprovement = 0;
+  int bestCost = state.input->numClauses + 1;
+  double T = -1 / log(0.97);
+  State best = state;
 
-    if (state.cost == 0) {
-      return state;
+  while (true) {
+    bool improved = false;
+    for (unsigned i=0; i<stepsPerTemperature; i++) {
+      if (state.cost == 0) {
+        stop = true;
+        return state;
+      } else if (stop) {
+        return best.cost < state.cost ? best : state;
+      }
+      // choose randomly a literal to maybe flip
+      int literal = randLit(randGen);
+      int delta = state.flipDelta(literal);
+      if (delta <= 0) {
+        state.flip(literal);
+      } else {
+        // random cutoff
+        double P = exp(static_cast<double>(-delta)/T);
+        double cutoff = randReal(randGen);
+        if (P > cutoff) {
+          accepted++;
+          state.flip(literal);
+        } else {
+          rejected++;
+        }
+      }
+      // TODO: is improvement understood as local or improving best known?
+      if (state.cost < bestCost) {
+        bestCost = state.cost;
+        improved = true;
+      }
     }
-
-    // choose randomly a literal to maybe flip
-    int literal = randLit(randGen);
-    int delta = state.flipDelta(literal);
-    if (delta <= 0) {
-      state.flip(literal);
-      T = T * 0.95;
-      continue;
+    if (improved) {
+      stepsWithoutImprovement = 0;
+    } else {
+      stepsWithoutImprovement++;
+      double ratio = static_cast<double>(accepted)/static_cast<double>(accepted+rejected);
+      if (stepsWithoutImprovement >= 5 && ratio < 0.02) {
+        break;
+      }
     }
-    // random cutoff
-    double cutoff = randReal(randGen);
-    double P = exp(static_cast<double>(-delta)/T);
-    if (P > cutoff) {
-      state.flip(literal);
-    }
-
-    // TODO: experiment with temperature distribution
     T = T * 0.95;
   }
   return state;

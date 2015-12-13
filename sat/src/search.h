@@ -6,7 +6,7 @@
 
 
 // TODO: parameter constructs to experiment with
-State anneal(State initial, std::minstd_rand& randGen);
+State anneal(State initial, std::minstd_rand& randGen, std::atomic<bool>& stop);
 State minConflict(State initial, std::minstd_rand& randGen, std::atomic<bool>& stop);
 
 #endif
