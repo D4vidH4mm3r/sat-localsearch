@@ -7,7 +7,7 @@ State::State(Input* input, std::minstd_rand& randGen) :
   input(input),
   inst(input->numLiterals),
   cost(input->numClauses),
-  numSatisfying(input->numClauses, 0) {
+  S(input->numClauses, 0) {
   // initialize some instantiation
   std::uniform_int_distribution<int> randDist(0, 1);
   for (unsigned int i=0; i<inst.size(); i++) {
@@ -21,7 +21,7 @@ State::State(const State& state) :
   input(state.input),
   inst(state.inst),
   cost(state.cost),
-  numSatisfying(state.numSatisfying) {
+  S(state.S) {
 }
 
 void State::randomize(std::minstd_rand& randGen) {
@@ -35,7 +35,7 @@ void State::randomize(std::minstd_rand& randGen) {
 void State::recomputeFailed(bool zeroOut) {
   if (zeroOut) {
     cost = input->numClauses;
-    std::fill(numSatisfying.begin(), numSatisfying.end(), 0);
+    std::fill(S.begin(), S.end(), 0);
   }
   int clauseNum = 0;
   for (Clause clause : input->formula) {
@@ -44,13 +44,13 @@ void State::recomputeFailed(bool zeroOut) {
       if (lit > 0) {
         int litIndex = lit - 1;
         if (inst[litIndex]) {
-          numSatisfying[clauseNum]++;
+          S[clauseNum]++;
           clauseSatisfied = true;
         }
       } else {
         int litIndex = -lit - 1;
         if (!inst[litIndex]) {
-          numSatisfying[clauseNum]++;
+          S[clauseNum]++;
           clauseSatisfied = true;
         }
       }
@@ -70,10 +70,10 @@ int State::flipDelta(int literal) {
 
   for (int clause : input->posInClause[litIndex]) {
     clauseIndex = clause - 1;
-    if (numSatisfying[clauseIndex] == 0) {
+    if (S[clauseIndex] == 0) {
       // flipping one literal in failed clause will always satisfy it
       res--;
-    } else if (numSatisfying[clauseIndex] == 1 && !valAfterFlip) {
+    } else if (S[clauseIndex] == 1 && !valAfterFlip) {
       // flipping the literal may fail this one if it was the one satisfying
       res++;
     } // if more than two satisfy, nothing changes for this clause
@@ -81,9 +81,9 @@ int State::flipDelta(int literal) {
 
   for (int clause : input->negInClause[literal-1]) { // symmetric
     int clauseIndex = clause - 1;
-    if (numSatisfying[clauseIndex] == 0) {
+    if (S[clauseIndex] == 0) {
       res--;
-    } else if (numSatisfying[clauseIndex] == 1 && valAfterFlip) {
+    } else if (S[clauseIndex] == 1 && valAfterFlip) {
       res++;
     }
   }
@@ -107,14 +107,14 @@ void State::flip(int literal) {
     clauseIndex = clause - 1;
     if (!valAfterFlip) {
       // this used to satisfy the clause
-      numSatisfying[clauseIndex]--;
-      if (numSatisfying[clauseIndex] == 0) {
+      S[clauseIndex]--;
+      if (S[clauseIndex] == 0) {
         cost++;
       }
     } else {
       // this used to not satisfy the clause
-      numSatisfying[clauseIndex]++;
-      if (numSatisfying[clauseIndex] == 1) {
+      S[clauseIndex]++;
+      if (S[clauseIndex] == 1) {
         cost--;
       }
     }
@@ -123,13 +123,13 @@ void State::flip(int literal) {
   for (int clause : input->negInClause[literal-1]) { // symmetric
     clauseIndex = clause - 1;
     if (valAfterFlip) {
-      numSatisfying[clauseIndex]--;
-      if (numSatisfying[clauseIndex] == 0) {
+      S[clauseIndex]--;
+      if (S[clauseIndex] == 0) {
         cost++;
       }
     } else {
-      numSatisfying[clauseIndex]++;
-      if (numSatisfying[clauseIndex] == 1) {
+      S[clauseIndex]++;
+      if (S[clauseIndex] == 1) {
         cost--;
       }
     }

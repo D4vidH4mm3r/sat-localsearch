@@ -61,11 +61,8 @@ State minConflict(State state, std::minstd_rand& randGen, std::atomic<bool>& sto
       // choose randomly a failed clause
       randInt.param(std::uniform_int_distribution<int>::param_type(0, state.cost-1));
       int failedNumber = randInt(randGen);
-      vector<int>::iterator failedClause = nth_where(state.numSatisfying.begin(),
-                                                     state.numSatisfying.end(),
-                                                     failedNumber,
-                                                     [] (int const n) {return n==0;});
-      int failedClauseIndex = std::distance(state.numSatisfying.begin(), failedClause);
+      vector<int>::iterator failedClause = nth_where(state.S.begin(), state.S.end(), failedNumber, [] (int const n) {return n==0;});
+      int failedClauseIndex = std::distance(state.S.begin(), failedClause);
       const Clause& chosenClause = state.input->formula[failedClauseIndex];
       int flipLiteral = -1;
       if (randReal(randGen) < wp) {

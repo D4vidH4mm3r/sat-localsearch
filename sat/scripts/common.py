@@ -46,7 +46,6 @@ def runInstance(fn, *args, **kwargs):
     for k, v in kwargs.items():
         arglist.append("-" + k)
         arglist.append(str(v))
-    print(arglist)
     p = Popen(arglist, stdout=PIPE)
     inter = p.communicate()
     return inter[0].decode("utf-8")

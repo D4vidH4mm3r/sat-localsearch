@@ -6,7 +6,7 @@ c DESCRIPTION: Large randomly generated instance
 c
 c NOTE: Satisfiable
 c
-p cnf 2000 8500
+p cnf 2000  8500
 1295 1303 -1372 0
 -459 1840 1268 0
 -1481 536 -920 0

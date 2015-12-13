@@ -10,12 +10,11 @@ class State {
   Input* input;
   Instantiation inst;
   int cost; // number of failed clauses
-  // element i = (sign)j indicates that literal i appears with sign in clause j
   int flipDelta(int literal); // note: not 0-indexed
   void flip(int literal);
   void flip_slow(int literal);
   void randomize(std::minstd_rand&);
-  vector<int> numSatisfying;
+  vector<int> S; // S[i] = how many literals satisfy clause i
  private:
   void recomputeFailed(bool zeroOut);
 };

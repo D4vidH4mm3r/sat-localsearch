@@ -20,7 +20,6 @@ for fn in sorted(datadir.iterdir()):
         else:
             numFailed += 1
     time = lines[-2].split(" ")[-1]
-    if fn.name.startswith("uuf"):
-        assert numFailed == 1, "Unsatisfiable instances seem to have solution with 1 violation"
-    else:
+    if fn.name.startswith("uf"):
         assert numFailed == 0, "Satisfiable instances should be satisfied"
+    print(numFailed, "failed")
