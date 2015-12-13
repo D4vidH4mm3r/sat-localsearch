@@ -65,12 +65,11 @@ State anneal(State state, std::minstd_rand& randGen, std::atomic<bool>& stop) {
   return state;
 }
 
-State minConflict(State state, std::minstd_rand& randGen, std::atomic<bool>& stop) {
+State minConflict(State state, std::minstd_rand& randGen, std::atomic<bool>& stop, double p) {
   std::uniform_int_distribution<int> randInt;
   std::uniform_real_distribution<double> randReal(0.0, 1.0);
   unsigned long iterMax = state.input->numLiterals*state.input->numClauses;
   // TODO: tweak - though it seems pretty good actually
-  double wp = 0.2; // probability to flip random instead of best
   State best = state;
 
   while (true) { // run until stopped
@@ -90,7 +89,7 @@ State minConflict(State state, std::minstd_rand& randGen, std::atomic<bool>& sto
       int failedClauseIndex = std::distance(state.S.begin(), failedClause);
       const Clause& chosenClause = state.input->formula[failedClauseIndex];
       int flipLiteral = -1;
-      if (randReal(randGen) < wp) {
+      if (randReal(randGen) < p) {
         randInt.param(std::uniform_int_distribution<int>::param_type(0, chosenClause.size()-1));
         flipLiteral = chosenClause[randInt(randGen)];
         flipLiteral = flipLiteral > 0 ? flipLiteral : -flipLiteral;

@@ -25,6 +25,7 @@ int main(int argc, const char* argv[]) {
   int randSeed = 1;
   int searchStrategy = 0; // 0 for min-conflict, 1 for simulated annealing
   int timeout = 20;
+  double p = 0.2;
   {
     std::istringstream iss;
     for (int i=1; i<argc; i++) {
@@ -34,6 +35,10 @@ int main(int argc, const char* argv[]) {
         i++;
       } else if (arg == "--main::output_file" || arg == "-o") {
         outputName = argv[i+1];
+        i++;
+      } else if (arg == "-p") {
+        iss.str(argv[i+1]);
+        iss >> p;
         i++;
       } else if (arg == "--main::seed" || arg == "-s") {
         iss.str(argv[i+1]);
@@ -97,10 +102,11 @@ int main(int argc, const char* argv[]) {
   // do some search
   int numThreads = std::thread::hardware_concurrency();
   vector<std::future<State> > futures(numThreads);
+  cout << "p: " << p << endl;
   for (int i=0; i<numThreads; i++) {
     state.randomize(randGen);
     if (searchStrategy == 0) {
-      futures[i] = std::async(std::launch::async, minConflict, state, ref(randGen), ref(stop));
+      futures[i] = std::async(std::launch::async, minConflict, state, ref(randGen), ref(stop), p);
     } else if (searchStrategy == 1) {
       futures[i] = std::async(std::launch::async, anneal, state, ref(randGen), ref(stop));
     } else {
