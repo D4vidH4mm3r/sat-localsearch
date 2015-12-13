@@ -33,7 +33,7 @@ Input::Input(const string& file_name) :
   int clauseNum = 1;
   int lit;
   int litIndex;
-  while (line[0] != '%' && line[0] != '0') {
+  while (line[0] != '%' && line[0] != '0' && clauseNum <= numClauses) {
     Clause clause(0);
     iss.clear();
     iss.str(line);
