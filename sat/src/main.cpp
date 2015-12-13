@@ -1,5 +1,6 @@
 #include <cassert>
 #include <chrono>
+#include <csignal>
 #include <fstream>
 #include <future>
 #include <iostream>
@@ -13,6 +14,8 @@
 using std::cout;
 using std::endl;
 using std::ref;
+
+std::atomic<bool> stop;
 
 int main(int argc, const char* argv[]) {
   bool verbose = false;
@@ -54,15 +57,21 @@ int main(int argc, const char* argv[]) {
   }
   auto timeBefore = std::chrono::system_clock::now();
   // spawn thread which will later stop search if need be
-  std::atomic<bool> stop;
   stop = false;
   std::thread([&](){
-      std::this_thread::sleep_for(std::chrono::milliseconds(timeout*1000-200));
+      std::this_thread::sleep_for(std::chrono::seconds(timeout));
       if (verbose) {
         cout << "Search stopped by timer process!" << endl;
       }
       stop = true;
     }).detach();
+  auto stopper = [](int s) {
+    stop = true;
+  };
+  // signal 6 used by tests
+  std::signal(SIGIOT, stopper);
+  // signal used by Ctrl-C
+  std::signal(SIGINT, stopper);
 
   // read instance
   Input* input = new Input(inputName);
