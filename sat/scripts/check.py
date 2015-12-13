@@ -3,8 +3,10 @@ from itertools import takewhile
 from pathlib import Path
 
 
-datadir = Path("../data")
-instance = "../data/uf20-010.cnf"
+top = Path("..")
+datadir = top / "data"
+srcdir = top / "src"
+main = str(srcdir / "xyz")
 
 for instance in sorted(datadir.iterdir()):
     print(instance)
@@ -37,11 +39,11 @@ for instance in sorted(datadir.iterdir()):
     assert len(positivesInClauses) == len(negativesInClauses) == numClauses
 
     instantiation = []
-    p = Popen(["./xyz", "-t", "3", str(instance)], stdout=PIPE)
+    p = Popen([main, "-t", "3", str(instance)], stdout=PIPE)
     inter = p.communicate()
     res = inter[0].decode("utf-8")
-    line = res.partition("\n")[0]
-    for val in line.split(" ")[1:-1]:
+    lines = res.split("\n")
+    for val in lines[0].split(" ")[1:-1]:
         instantiation.append(int(val) > 0)
     assert len(instantiation) == numLits
 
@@ -55,4 +57,6 @@ for instance in sorted(datadir.iterdir()):
             failed += 1
     print("#satisfied:", satisfied)
     print("#failed:", failed)
+    time = lines[-2].split(" ")[-1]
+    print("Time spent (s):", time)
     print()
