@@ -102,7 +102,6 @@ int main(int argc, const char* argv[]) {
   // do some search
   int numThreads = std::thread::hardware_concurrency();
   vector<std::future<State> > futures(numThreads);
-  cout << "p: " << p << endl;
   for (int i=0; i<numThreads; i++) {
     state.randomize(randGen);
     if (searchStrategy == 0) {
