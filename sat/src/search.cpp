@@ -7,7 +7,7 @@ using std::cout;
 using std::endl;
 
 
-State anneal(State state, std::minstd_rand& randGen, std::atomic<bool>& stop) {
+State anneal(State state, std::minstd_rand& randGen, std::atomic<bool>& stop, int goal) {
   std::uniform_int_distribution<int> randLit(1, state.input->numLiterals);
   std::uniform_real_distribution<double> randReal(0.0, 1.0);
   // TODO: experiment with number of steps and temperatures
@@ -23,7 +23,7 @@ State anneal(State state, std::minstd_rand& randGen, std::atomic<bool>& stop) {
   while (true) {
     bool improved = false;
     for (unsigned i=0; i<stepsPerTemperature; i++) {
-      if (state.cost == 0) {
+      if (state.cost <= goal) {
         stop = true;
         return state;
       } else if (stop) {
@@ -65,7 +65,7 @@ State anneal(State state, std::minstd_rand& randGen, std::atomic<bool>& stop) {
   return state;
 }
 
-State minConflict(State state, std::minstd_rand& randGen, std::atomic<bool>& stop, double p) {
+State minConflict(State state, std::minstd_rand& randGen, std::atomic<bool>& stop, double p, int goal) {
   std::uniform_int_distribution<int> randInt;
   std::uniform_real_distribution<double> randReal(0.0, 1.0);
   unsigned long iterMax = state.input->numLiterals*state.input->numClauses;
@@ -75,7 +75,7 @@ State minConflict(State state, std::minstd_rand& randGen, std::atomic<bool>& sto
   while (true) { // run until stopped
     for (unsigned long i=0; i<iterMax; i++) {
 
-      if (state.cost == 0) {
+      if (state.cost <= goal) {
         stop = true;
         return state;
       } else if (stop) {
@@ -106,7 +106,7 @@ State minConflict(State state, std::minstd_rand& randGen, std::atomic<bool>& sto
       }
       state.flip(flipLiteral);
     }
-    if (best.cost > state.cost) {
+    if (state.cost < best.cost) {
       best = state;
     }
     if (stop) {

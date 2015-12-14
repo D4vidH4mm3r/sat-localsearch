@@ -25,6 +25,7 @@ int main(int argc, const char* argv[]) {
   int randSeed = 1;
   int searchStrategy = 0; // 0 for min-conflict, 1 for simulated annealing
   int timeout = 20;
+  int goal = 0; // good enough cost to stop immediately
   double p = 0.2;
   {
     std::istringstream iss;
@@ -43,6 +44,10 @@ int main(int argc, const char* argv[]) {
       } else if (arg == "--main::seed" || arg == "-s") {
         iss.str(argv[i+1]);
         iss >> randSeed;
+        i++;
+      } else if (arg == "--goal" || arg == "-g") {
+        iss.str(argv[i+1]);
+        iss >> goal;
         i++;
       } else if (arg == "--search::strategy" || arg == "-ss") {
         iss.str(argv[i+1]);
@@ -105,9 +110,9 @@ int main(int argc, const char* argv[]) {
   for (int i=0; i<numThreads; i++) {
     state.randomize(randGen);
     if (searchStrategy == 0) {
-      futures[i] = std::async(std::launch::async, minConflict, state, ref(randGen), ref(stop), p);
+      futures[i] = std::async(std::launch::async, minConflict, state, ref(randGen), ref(stop), p, goal);
     } else if (searchStrategy == 1) {
-      futures[i] = std::async(std::launch::async, anneal, state, ref(randGen), ref(stop));
+      futures[i] = std::async(std::launch::async, anneal, state, ref(randGen), ref(stop), goal);
     } else {
       throw "Unknown search type (only have 0 for min-conflict and 1 for annealing)";
     }
@@ -117,12 +122,8 @@ int main(int argc, const char* argv[]) {
     if (res.cost < bestState.cost) {
       bestState = res;
     }
-    if (bestState.cost == 0) {
-      goto done_searching;
-    }
   }
 
- done_searching:
   auto timeAfter = std::chrono::system_clock::now();
   double timeSpent = static_cast<double>((timeAfter-timeBefore).count())/1e9;
   std::ofstream fileStream;
