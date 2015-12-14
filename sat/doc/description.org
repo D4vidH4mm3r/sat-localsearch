@@ -77,3 +77,29 @@ Note that the implementation generates $r \in [0,1]$ rather than $[0,1)$ (this m
 Selecting a random failing clause is currently done somewhat inefficiently in the implementation: as no sets of failed clauses are explicitly maintained, the vector representing $S$ is used instead.
 A random integer $l$ between $0$ and the number of failed clauses minus one is generated and clause number $l$ (zero-indexed) which has $s_C=0$ is chosen.
 This takes $O(m)$ time, but since this is already spent calculating the $\Delta$ or making the update, this does not worsen the time to do a step asymptotically.
+
+* Tuning the $p$ parameter
+#+BEGIN_SRC R :session :results graphics :file p1.pdf :exports output
+  require(ggplot2)
+  data <- read.table("../res/tune-p-satisfiable.csv", header=TRUE)
+  data$p <- factor(data$p)
+
+  ggplot(data, aes(x=time, colour=p)) +
+      stat_ecdf() + labs(y="cumulative frequency")
+#+END_SRC
+
+#+RESULTS:
+[[file:p1.pdf]]
+
+#+BEGIN_SRC R :session :results graphics :file p2.pdf :exports output
+  data <- data[!(data$p %in% c(0.1,0.7,0.8,0.9)),]
+  ggplot(data, aes(x=time, colour=p)) +
+      stat_ecdf() + labs(y="cumulative frequency")
+#+END_SRC
+
+#+RESULTS:
+
+#+BEGIN_SRC R :session :results graphics :file p3.pdf :exports output
+  ggplot(data, aes(x=p, y=time), fill=p) +
+      geom_boxplot() + coord_flip()
+#+END_SRC
