@@ -3,15 +3,40 @@
 #include <random>
 #include "state.h"
 
-State::State(Input* input, std::minstd_rand& randGen) :
+State::State(Input* input, std::minstd_rand& randGen, int initType) :
   input(input),
   inst(input->numLiterals),
   cost(input->numClauses),
   S(input->numClauses, 0) {
   // initialize some instantiation
-  std::uniform_int_distribution<int> randDist(0, 1);
-  for (unsigned int i=0; i<inst.size(); i++) {
-    inst[i] = randDist(randGen);
+  if (initType == 0) {
+    std::uniform_int_distribution<int> randDist(0, 1);
+    for (unsigned int i=0; i<inst.size(); i++) {
+      inst[i] = randDist(randGen);
+    }
+  } else if (initType == 1) {
+    // wish to examine each literal once, but in random order
+    vector<int> literalsToExamine(input->numLiterals);
+    std::iota(literalsToExamine.begin(), literalsToExamine.end(), 0);
+    std::shuffle(literalsToExamine.begin(), literalsToExamine.end(), randGen);
+    vector<bool> clauseSatisfied(input->numClauses, 0);
+    for (auto v: literalsToExamine) {
+      int posWouldSatisfy = std::count_if(input->posInClause[v].begin(), input->posInClause[v].end(), [&] (int const i) {return clauseSatisfied[i];});
+      int negWouldSatisfy = std::count_if(input->negInClause[v].begin(), input->negInClause[v].end(), [&] (int const i) {return clauseSatisfied[i];});
+      if (posWouldSatisfy > negWouldSatisfy) {
+        inst[v] = true;
+        for (auto c: input->posInClause[v]) {
+          clauseSatisfied[c] = true;
+        }
+      } else { // NOTE: setting to false redundant in init
+        inst[v] = false;
+        for (auto c: input->negInClause[v]) {
+          clauseSatisfied[c] = true;
+        }
+      }
+    }
+  } else {
+    throw "Unknown init type (only have 0 for random and 1 for randomized greedy)";
   }
   // compute what is failed and so on
   recomputeFailed(false);
@@ -150,4 +175,8 @@ std::ostream& operator<<(std::ostream& os, const State& s) {
   os << " 0" << std::endl << std::endl;
   os << "c Cost: " << s.cost << std::endl;
   return os;
+}
+
+bool operator<(const State& lhs, const State& rhs) {
+  return lhs.cost < rhs.cost;
 }

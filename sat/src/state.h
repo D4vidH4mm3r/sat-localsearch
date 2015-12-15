@@ -5,7 +5,7 @@
 
 class State {
  public:
-  State(Input*, std::minstd_rand&);
+  State(Input*, std::minstd_rand&, int);
   State(const State&);
   Input* input;
   Instantiation inst;
@@ -20,4 +20,5 @@ class State {
 };
 
 std::ostream& operator<<(std::ostream& os, const State& s);
+bool operator<(const State& lhs, const State& rhs);
 #endif

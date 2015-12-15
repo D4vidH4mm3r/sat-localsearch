@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cassert>
 #include <chrono>
 #include <csignal>
@@ -24,9 +25,10 @@ int main(int argc, const char* argv[]) {
   string outputName = "";
   int randSeed = 1;
   int searchStrategy = 0; // 0 for min-conflict, 1 for simulated annealing
+  int initType = 0; // 0 for random, 1 for greedy construction heuristic
   int timeout = 20;
   int goal = 0; // good enough cost to stop immediately
-  double p = 0.2;
+  double p = 0.5;
   {
     std::istringstream iss;
     for (int i=1; i<argc; i++) {
@@ -52,6 +54,10 @@ int main(int argc, const char* argv[]) {
       } else if (arg == "--search::strategy" || arg == "-ss") {
         iss.str(argv[i+1]);
         iss >> searchStrategy;
+        i++;
+      } else if (arg == "--init_type" || arg == "-it") {
+        iss.str(argv[i+1]);
+        iss >> initType;
         i++;
       } else if (arg == "--main::timeout" || arg == "-t") {
         iss.str(argv[i+1]);
@@ -93,36 +99,33 @@ int main(int argc, const char* argv[]) {
   // initialize random generator
   std::minstd_rand randGen(randSeed);
 
-  // initialize state
-  State state(input, randGen);
-  State bestState = state;
-
-  if (verbose) {
-    int numSatisfied = input->numClauses - state.cost;
-    cout << "Random instance satisfied " << numSatisfied << " and failed " << state.cost << endl;
-    cout << "(" << static_cast<float>(numSatisfied) /\
-      static_cast<float>(input->numClauses) * 100 << "%)" << endl;;
-  }
-
   // do some search
   int numThreads = std::thread::hardware_concurrency();
-  vector<std::future<State> > futures(numThreads);
+  vector<State> states;
+  vector<std::thread> threads;
+  threads.reserve(numThreads);
+  states.reserve(numThreads);
   for (int i=0; i<numThreads; i++) {
-    state.randomize(randGen);
+    states.push_back(State(input, randGen, initType));
+    if (verbose) {
+      int numSatisfied = input->numClauses - states[i].cost;
+      cout << "Initial instance satisfied " << numSatisfied << " and failed " << states[i].cost << endl;
+      cout << "(" << static_cast<float>(numSatisfied) /\
+        static_cast<float>(input->numClauses) * 100 << "%)" << endl;;
+    }
     if (searchStrategy == 0) {
-      futures[i] = std::async(std::launch::async, minConflict, state, ref(randGen), ref(stop), p, goal);
+      threads.push_back(std::thread(minConflict, ref(states[i]), ref(randGen), ref(stop), p, goal));
     } else if (searchStrategy == 1) {
-      futures[i] = std::async(std::launch::async, anneal, state, ref(randGen), ref(stop), goal);
+      threads.push_back(std::thread(anneal, ref(states[i]), ref(randGen), ref(stop), goal));
     } else {
       throw "Unknown search type (only have 0 for min-conflict and 1 for annealing)";
     }
   }
-  for (auto& future : futures) {
-    State res = future.get();
-    if (res.cost < bestState.cost) {
-      bestState = res;
-    }
+  for (auto& thread : threads) {
+    thread.join();
   }
+  auto bestit = std::min_element(states.begin(), states.end());
+  State best = *bestit;
 
   auto timeAfter = std::chrono::system_clock::now();
   double timeSpent = static_cast<double>((timeAfter-timeBefore).count())/1e9;
@@ -135,7 +138,7 @@ int main(int argc, const char* argv[]) {
     }
   }
   std::ostream& outputStream = (outputName == "" ? cout : fileStream);
-  outputStream << bestState;
+  outputStream << best;
   outputStream << "c Time: " << timeSpent << std::endl;
   if (outputName != "") {
     fileStream.close();

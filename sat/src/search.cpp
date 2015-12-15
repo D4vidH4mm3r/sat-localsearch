@@ -7,28 +7,33 @@ using std::cout;
 using std::endl;
 
 
-State anneal(State state, std::minstd_rand& randGen, std::atomic<bool>& stop, int goal) {
-  std::uniform_int_distribution<int> randLit(1, state.input->numLiterals);
+void anneal(State& best, std::minstd_rand& randGen, std::atomic<bool>& stop, int goal) {
+  std::uniform_int_distribution<int> randLit(1, best.input->numLiterals);
   std::uniform_real_distribution<double> randReal(0.0, 1.0);
   // TODO: experiment with number of steps and temperatures
   // TODO: experiment with temperature distribution
-  unsigned stepsPerTemperature = state.input->numLiterals * (state.input->numLiterals-1);
+  unsigned stepsPerTemperature = best.input->numLiterals * (best.input->numLiterals-1);
   unsigned accepted = 0;
   unsigned rejected = 0;
   unsigned stepsWithoutImprovement = 0;
-  int bestCost = state.input->numClauses + 1;
+  int bestCost = best.input->numClauses + 1;
   double T = -1 / log(0.97);
-  State best = state;
+  State state = best;
 
   while (true) {
     bool improved = false;
     for (unsigned i=0; i<stepsPerTemperature; i++) {
-      if (state.cost <= goal) {
-        stop = true;
-        return state;
-      } else if (stop) {
-        return best.cost < state.cost ? best : state;
+
+      if (state.cost <= goal || stop) {
+        if (state.cost <= goal) {
+          stop = true;
+        }
+        if (state < best) {
+          best = state;
+        }
+        return;
       }
+
       // choose randomly a literal to maybe flip
       int literal = randLit(randGen);
       int delta = state.flipDelta(literal);
@@ -62,24 +67,26 @@ State anneal(State state, std::minstd_rand& randGen, std::atomic<bool>& stop, in
     }
     T = T * 0.95;
   }
-  return state;
+  // TODO: reheat
 }
 
-State minConflict(State state, std::minstd_rand& randGen, std::atomic<bool>& stop, double p, int goal) {
+void minConflict(State& best, std::minstd_rand& randGen, std::atomic<bool>& stop, double p, int goal) {
   std::uniform_int_distribution<int> randInt;
   std::uniform_real_distribution<double> randReal(0.0, 1.0);
-  unsigned long iterMax = state.input->numLiterals*state.input->numClauses;
-  // TODO: tweak - though it seems pretty good actually
-  State best = state;
+  unsigned long iterMax = best.input->numLiterals*best.input->numClauses;
+  State state = best;
 
   while (true) { // run until stopped
     for (unsigned long i=0; i<iterMax; i++) {
 
-      if (state.cost <= goal) {
-        stop = true;
-        return state;
-      } else if (stop) {
-        return best.cost < state.cost ? best : state;
+      if (state.cost <= goal || stop) {
+        if (state.cost <= goal) {
+          stop = true;
+        }
+        if (state < best) {
+          best = state;
+        }
+        return;
       }
 
       // choose randomly a failed clause
@@ -106,11 +113,11 @@ State minConflict(State state, std::minstd_rand& randGen, std::atomic<bool>& sto
       }
       state.flip(flipLiteral);
     }
-    if (state.cost < best.cost) {
+    if (state < best) {
       best = state;
     }
     if (stop) {
-      return best;
+      return;
     }
     state.randomize(randGen);
   }
