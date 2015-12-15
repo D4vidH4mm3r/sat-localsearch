@@ -182,4 +182,13 @@ classes that values $p=0.5$ and $p=0.6$ perform the best.
 
 #+RESULTS:
 
+#+BEGIN_SRC R :session
+  data <- read.table("../res/test-greedy-init-unsat.csv", header=TRUE)
+  completed <- data[data$cost<=2,]
+  completed$it <- factor(completed$it)
+  ggplot(completed, aes(x=time, colour=it)) + stat_ecdf()
+#+END_SRC
+
+#+RESULTS:
+
 * Search strategy 2: Simulated annealing
