@@ -173,4 +173,13 @@ classes that values $p=0.5$ and $p=0.6$ perform the best.
 [fn:instances] The instances used all contain 250 literals and 1065 clauses.  They can be found at
 [[http://www.cs.ubc.ca/~hoos/SATLIB/benchm.html]]
 
+** Greedy construction heuristic
+#+BEGIN_SRC R :session
+  data <- read.table("../res/test-greedy-init-sat.csv", header=TRUE)
+  data$it <- factor(data$it)
+  ggplot(data, aes(x=time, colour=it)) + stat_ecdf()
+#+END_SRC
+
+#+RESULTS:
+
 * Search strategy 2: Simulated annealing
