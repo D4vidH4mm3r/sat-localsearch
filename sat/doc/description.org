@@ -3,54 +3,68 @@
 #+OPTIONS: toc:nil
 
 * The problem
-The decision version of a satisfiability problem is: Given a formula $F$ consisting of $m$ clauses in which $n$ literals appear, does there exist an assignment (true or false) to the literal such that the formula becomes true?
-Here we assume that the formula is in conjunctive normal form (terms in clauses are connected with disjunctions and all clauses are connected with conjunctions).
-An optimization version is to find an assignment of truth values to the literals which maximizes the number of satisfied clauses---this is what the local search algorithm presented here will do.
+The decision version of a satisfiability problem is: Given a formula $F$ consisting of $m$ clauses
+in which $n$ literals appear, does there exist an assignment (true or false) to the literal such
+that the formula becomes true?  Here we assume that the formula is in conjunctive normal form (terms
+in clauses are connected with disjunctions and all clauses are connected with conjunctions).  An
+optimization version is to find an assignment of truth values to the literals which maximizes the
+number of satisfied clauses---this is what the local search algorithm presented here will do.
 
-* Algorithm
+* Neighborhoods and deltas
 
 ** Neighbourhoods
-The neighbourhoods examined by the search are one-exchange neighbourhoods.
-As booleans can only take two different values, this means that a neighbour $s'$ of $s$ has the value of one literal flipped; the neighbourhood function is:
+The neighbourhoods examined by the search are one-exchange neighbourhoods.  As booleans can only
+take two different values, this means that a neighbour $s'$ of $s$ has the value of one literal
+flipped; the neighbourhood function is:
 \begin{equation*}
 <v_1, v_2, \dots, v_k, v_{k+1}, \dots, v_n> \mapsto
 \left\{<v_1, v_2, \dots, \neg v_k, v_{k+1}, \dots, v_n>\ \mid\ k \in \{1, 2, \dots, n\}\right\}
 \end{equation*}
-Where $<v_1, v_2, \dots, v_n>$ denotes an instantiation giving values to the literals.
-The size of the neighbourhood is $n-1$.
+Where $<v_1, v_2, \dots, v_n>$ denotes an instantiation giving values to the literals.  The size of
+the neighbourhood is $n-1$.
 
 ** Delta computation
-Two static data structures are used to quickly find the clauses which are relevant for some literal $j$:
+Two static data structures are used to quickly find the clauses which are relevant for some literal
+$j$:
 \begin{align*}
 C(x_j) &= \{c_i\ \mid\ x_j \text{ appears (not negated) in } c_i \} \\
 \overline{C}(x_j) &= \{c_i\ \mid\ x_j \text{ appears negated in } c_i \}
 \end{align*}
-These two sets are implemented using vectors (index $i$ contains vector for clause $i$ which has indices for literals) and they take up $O(n)$ space and take $O(km)$ time to initialize (where $k$ is the maximum number of literals in a clause).
+These two sets are implemented using vectors (index $i$ contains vector for clause $i$ which has
+indices for literals) and they take up $O(n)$ space and take $O(km)$ time to initialize (where $k$
+is the maximum number of literals in a clause).
 
-Additionally, a dynamic structure is used to keep track of how many of the literals in the different clauses are curently true (status criticality for each clause):
+Additionally, a dynamic structure is used to keep track of how many of the literals in the different
+clauses are curently true (status criticality for each clause):
 \begin{equation*}
 s_i = \left| \left\{ x_j\ \mid\ x_j \in C_i \wedge x_j \right\} \cup
 \left\{ x_j\ \mid\ \overline{x_j} \in C_i \wedge \overline{x_j} \right\} \right|
 \end{equation*}
-This structure is also implemented as a vector.
-It takes up $O(m)$ space and it takes $O(km)$ time to initialize.
+This structure is also implemented as a vector.  It takes up $O(m)$ space and it takes $O(km)$ time
+to initialize.
 
-Computing the delta (change in number of failed clauses) for a flip of a literal $l$ is done by looking at all the clauses in which $l$ appears.
-If, for some clause $C$, the value $s_C=0$, we know for sure that flipping a literal in this clause will change it from unsatisfied to satisfied (and so $\Delta$ is decremented).
-If $s_C=1$, there are four cases to consider:
+Computing the delta (change in number of failed clauses) for a flip of a literal $l$ is done by
+looking at all the clauses in which $l$ appears.  If, for some clause $C$, the value $s_C=0$, we
+know for sure that flipping a literal in this clause will change it from unsatisfied to satisfied
+(and so $\Delta$ is decremented).  If $s_C=1$, there are four cases to consider:
 |                         | $l$ is true             | $l$ is false            |
 |-------------------------+-------------------------+-------------------------|
 | $C \in C(l)$            | $\Delta \gets \Delta+1$ | nothing happens         |
 | $C \in \overline{C(l)}$ | nothing happens         | $\Delta \gets \Delta+1$ |
-We know that if $l$ appears positively (non-negated) in $C$ and there is currently only one literal satisfying $C$, then it is $l$ and flipping it would cause the clause to be unsatisfied.
+We know that if $l$ appears positively (non-negated) in $C$ and there is currently only one literal
+satisfying $C$, then it is $l$ and flipping it would cause the clause to be unsatisfied.
 
-Literals may appear in any clauses, so we may need to check all $m$ clauses meaning that the delta computation takes $O(m)$ time.
-When performing the flip, the value of the literal is negated ($O(1)$) and each clause the literal appears in is looked at ($O(m)$ again) and the counter $s_C$ for these clause is updated (incremented or decremented; this takes $O(1)$ for each of the $O(m)$ clauses).
-Therefore, making a step takes $O(m)$ time.
+Literals may appear in any clauses, so we may need to check all $m$ clauses meaning that the delta
+computation takes $O(m)$ time.  When performing the flip, the value of the literal is negated
+($O(1)$) and each clause the literal appears in is looked at ($O(m)$ again) and the counter $s_C$
+for these clause is updated (incremented or decremented; this takes $O(1)$ for each of the $O(m)$
+clauses).  Therefore, making a step takes $O(m)$ time.
 
-** Search strategy
-The search employed is min-conflict resolution combined with random walk (a crude implementation of simulated annealing is also included in the source code, but min-conflict resolution is used by default as it currently performs the best).
-Starting from a random state, the search proceeds as follows:
+* Search strategy 1: Min-conflict heuristic
+The search employed is min-conflict resolution combined with random walk (a crude implementation of
+simulated annealing is also included in the source code, but min-conflict resolution is used by
+default as it currently performs the best).  Starting from a random state, the search proceeds as
+follows:
 
 #+BEGIN_LaTeX
 \begin{algorithmic}
@@ -61,7 +75,7 @@ Starting from a random state, the search proceeds as follows:
     \EndIf
     \State $C \gets$ uniformly randomly chosen currently unsatisfied clause
     \State $r \gets$ uniformly random real number $\in [0, 1)$
-    \If{$r < wp$}
+    \If{$r \leq p$}
       \State $l \gets$ uniformly randomly chosen literal appearing in $C$
     \Else
       \State $l \gets \text{argmin}_{l \in C} \Delta_{\text{flip}}(l)$
@@ -71,35 +85,92 @@ Starting from a random state, the search proceeds as follows:
 \end{algorithmic}
 #+END_LaTeX
 
-The random $r$ enables the algorithm to go out of local optima; the algorithm will make a random flip with probability $wp$ (or make the best flip with probability $1-wp$).
-Note that the implementation generates $r \in [0,1]$ rather than $[0,1)$ (this may make choosing the best flip ever so slightly more likely than $1-wp$).
+The random choice between flipping the best literal or a random literal (in a given failed clause)
+enables the algorithm to go out of local optima; the algorithm will make a random flip with
+probability $p$ (or make the best flip with probability $1-p$).
 
-Selecting a random failing clause is currently done somewhat inefficiently in the implementation: as no sets of failed clauses are explicitly maintained, the vector representing $S$ is used instead.
-A random integer $l$ between $0$ and the number of failed clauses minus one is generated and clause number $l$ (zero-indexed) which has $s_C=0$ is chosen.
-This takes $O(m)$ time, but since this is already spent calculating the $\Delta$ or making the update, this does not worsen the time to do a step asymptotically.
+** Tuning the $p$ parameter
+The choice of $p$ is central to the performance of the algorithm.  If $p$ is close to $0$, the
+search can more easily get stuck in a local optimum (or rather, it may repeat a cycle of flips of
+the same literals in the same clauses---this behaviour was observed in an early version without the
+random literal flipping component).  On the other side, if $p$ is close to $1$, the search becomes
+less focused on actually making overall improvements.  Nine values for $p$ from $0.1$ to $0.9$ have
+been tested on a large uniform set of instances.[fn:instances]
 
-* Tuning the $p$ parameter
-#+BEGIN_SRC R :session :results graphics :file p1.pdf :exports output
+As the algorithm is expected to solve the satisfiable test instances reasonably quickly, the tuning
+will be to find the value for $p$ for which the solution is found the quickest.  Figure
+\ref{fig:sat-dist} shows the sample cumulative distribution over time for the different tested
+values---observe that the extreme values $p<0.2$ and $p>0.7$ perform very badly.
+#+HEADER: :height 4
+#+BEGIN_SRC R :session :results graphics :file p1.pdf :exports results
   require(ggplot2)
-  data <- read.table("../res/tune-p-satisfiable.csv", header=TRUE)
-  data$p <- factor(data$p)
-
-  ggplot(data, aes(x=time, colour=p)) +
+  sat <- read.table("../res/tune-p-satisfiable.csv", header=TRUE)
+  sat$p <- factor(sat$p)
+  ggplot(sat, aes(x=time, colour=p)) +
       stat_ecdf() + labs(y="cumulative frequency")
 #+END_SRC
-
+#+CAPTION: Sample cumulative distributions for the nine different "versions" of the algorithm showing the probability of each being done at a certain time.  These results are for the satisfiable instances.
+#+LABEL: fig:sat-dist
 #+RESULTS:
 [[file:p1.pdf]]
 
-#+BEGIN_SRC R :session :results graphics :file p2.pdf :exports output
-  data <- data[!(data$p %in% c(0.1,0.7,0.8,0.9)),]
-  ggplot(data, aes(x=time, colour=p)) +
+Similarly, for the unsatisfiable instances, the "original" version of the algorithm (with $p=0.2$)
+found solutions for many instances with only one failed clause reasonably quickly, so on these
+instances, the parameter values are compared on how quickly they find such a solution.  For these,
+the extreme values also performed very badly.  Note, however, that there is no guarantee that such a
+solution exists---for some instances, all the different "versions" of the algorithm failed to find a
+solution in 20 seconds.
+#+HEADER: :height 4
+#+BEGIN_SRC R :session :results graphics :file p2.pdf :exports results
+  unsat <- read.table("../res/tune-p-unsatisfiable.csv", header=TRUE)
+  unsat$p <- factor(unsat$p)
+  ggplot(unsat, aes(x=time, colour=p)) +
       stat_ecdf() + labs(y="cumulative frequency")
 #+END_SRC
-
+#+CAPTION: Same as \ref{fig:sat-dist} but the results are for the unsatisfiable instances.
+#+LABEL: fig:unsat-dist
 #+RESULTS:
+[[file:p2.pdf]]
 
-#+BEGIN_SRC R :session :results graphics :file p3.pdf :exports output
-  ggplot(data, aes(x=p, y=time), fill=p) +
+It is assumed that the different problem instances are somewhat comparable as they have the same
+size and were reportedly generated in the same way.  To get rid of this assumption, however, one can
+instead rank the algorithm "versions" on each instance and combine the results; figures
+\ref{fig:sat-box} and \ref{fig:unsat-box} show the rank distributions for the two test classes.
+Here, it is still obvious that the extreme values perform the worst.  Additionally, it seems in both
+classes that values $p=0.5$ and $p=0.6$ perform the best.
+
+#+HEADER: :height 4
+#+BEGIN_SRC R :session :results graphics :file p3.pdf :exports results
+  T1 <- split(sat$time, sat$instance)
+  T2 <- lapply(T1, rank, na.last="keep")
+  T3 <- unsplit(T2, sat$instance)
+  sat$rank <- T3
+  rm(T1, T2, T3)
+
+  ggplot(sat, aes(x=p, y=rank), fill=p) +
       geom_boxplot() + coord_flip()
 #+END_SRC
+#+CAPTION: Box plot showing the rank distribution (time to find satisfying solution) for the various tested values for the satisfiable instances.
+#+LABEL: fig:sat-box
+#+RESULTS:
+[[file:p3.pdf]]
+
+#+HEADER: :height 4
+#+BEGIN_SRC R :session :results graphics :file p4.pdf :exports results
+  T1 <- split(unsat$time, unsat$instance)
+  T2 <- lapply(T1, rank, na.last="keep")
+  T3 <- unsplit(T2, unsat$instance)
+  unsat$rank <- T3
+  rm(T1, T2, T3)
+  ggplot(unsat, aes(x=p, y=rank), fill=p) +
+      geom_boxplot() + coord_flip()
+#+END_SRC
+#+CAPTION: Box plot showing the rank distribution (time to find solution with only one failed clause) for the various tested values for the unsatisfiable instances.
+#+LABEL: fig:unsat-box
+#+RESULTS:
+[[file:p4.pdf]]
+
+[fn:instances] The instances used all contain 250 literals and 1065 clauses.  They can be found at
+[[http://www.cs.ubc.ca/~hoos/SATLIB/benchm.html]]
+
+* Search strategy 2: Simulated annealing
