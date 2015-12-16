@@ -1,3 +1,4 @@
 python benchmark.py tune-p-satisfiable uf250 -p p 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
 python benchmark.py tune-p-unsatisfiable uuf250 -p p 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
 python benchmark.py test-greedy-init-sat uf250 -p it 0 1
+python benchmark.py test-greedy-init-unsat uuf250 -p it 0 1 -p g 2
