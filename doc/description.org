@@ -125,7 +125,7 @@ solution in 20 seconds.
   ggplot(unsat, aes(x=time, colour=p)) +
       stat_ecdf() + labs(y="cumulative frequency")
 #+END_SRC
-#+CAPTION: Same as \ref{fig:sat-dist} but the results are for the unsatisfiable instances.
+#+CAPTION: Sample cumulative distributions for the nine different "versions" of the algorithm showing the probability of each being done at a certain time.  These results are for the unsatisfiable instances.
 #+LABEL: fig:unsat-dist
 #+RESULTS:
 [[file:tune-p-unsat.pdf]]
@@ -167,6 +167,18 @@ classes that values $p=0.5$ and $p=0.6$ perform the best.
 #+LABEL: fig:unsat-box
 #+RESULTS:
 [[file:p4.pdf]]
+
+A different way to find the optimal value for p is to use the =race= package to enter different
+values in a sort of competition.  The race setup tests each $p$ from a pool of candidates against a
+pool of tests (the satisfiable instances were used) one at a time.  Any candidates which perform
+statistically significantly worse (wrt. mean time to finish) are "killed".
+
+In the first race with values $p \in \{0.2, 0.3, 0.4, \dots, 0.7\}$, the final selected candidate
+was $0.5$ (two candidates were alive after all tests were run).
+
+In a second race to fine-tune with values $p \in \{0.45, 0.46, 0.47, \dots, 0.65\}$, it seemed that
+values from $0.5$ to $0.6$ were all pretty good; at the end of testing, 6 candidates were alive:
+$0.52$, $0.53$, $0.56$, $0.57$, $0.58$ and $0.60$.
 
 [fn:instances] The instances used all contain 250 literals and 1065 clauses.  They can be found at
 [[http://www.cs.ubc.ca/~hoos/SATLIB/benchm.html]]
