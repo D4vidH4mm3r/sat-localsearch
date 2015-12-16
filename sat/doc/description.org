@@ -2,6 +2,10 @@
 #+LATEX_HEADER: \usepackage{algpseudocode}
 #+OPTIONS: toc:nil
 
+#+BEGIN_SRC R :session :exports none :results none
+  require(ascii)
+  require(ggplot2)
+#+END_SRC
 * The problem
 The decision version of a satisfiability problem is: Given a formula $F$ consisting of $m$ clauses
 in which $n$ literals appear, does there exist an assignment (true or false) to the literal such
@@ -98,7 +102,6 @@ will be to find the value for $p$ for which the solution is found the quickest. 
 values---observe that the extreme values $p<0.2$ and $p>0.7$ perform very badly.
 #+HEADER: :height 4
 #+BEGIN_SRC R :session :results graphics :file tune-p-sat.pdf :exports results
-  require(ggplot2)
   sat <- read.table("../res/tune-p-satisfiable.csv", header=TRUE)
   sat$p <- factor(sat$p)
   ggplot(sat, aes(x=time, colour=p)) +
