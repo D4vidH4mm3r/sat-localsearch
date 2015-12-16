@@ -68,11 +68,7 @@ follows:
 
 #+BEGIN_LaTeX
 \begin{algorithmic}
-  \State $V \gets$ random assignment of truth values to each of the $n$ literals
   \For{$i = 1$ to maxIter}
-    \If{$\text{\#conflicts}=0$}
-      \State \Return
-    \EndIf
     \State $C \gets$ uniformly randomly chosen currently unsatisfied clause
     \State $r \gets$ uniformly random real number $\in [0, 1)$
     \If{$r \leq p$}
@@ -84,10 +80,9 @@ follows:
   \EndFor
 \end{algorithmic}
 #+END_LaTeX
-
-The random choice between flipping the best literal or a random literal (in a given failed clause)
-enables the algorithm to go out of local optima; the algorithm will make a random flip with
-probability $p$ (or make the best flip with probability $1-p$).
+Note that the actual implementation checks in the inner loop whether the cost is below some desired
+goal (then the search can stop immediately) and it keeps track of the best seen solution so this is
+returned even if the search moves away from it.
 
 ** Tuning the $p$ parameter
 The choice of $p$ is central to the performance of the algorithm.  If $p$ is close to $0$, the
@@ -224,3 +219,26 @@ difference in results between these two initialisation strategies:
 #+RESULTS:
 
 * Search strategy 2: Simulated annealing
+A different search strategy which was implemented and tested was simulated annealing.  The
+implementation works as follows:
+#+BEGIN_LaTeX
+\begin{algorithmic}
+  \State $T \gets T_{\text{initial}}$
+  \Repeat
+    \For{number of steps per temperature level}
+      \State $l \gets$ uniformly randomly chosen literal
+      \If{$\Delta_{\text{flip}}(l) \leq 0$}
+        \State flip $l$
+      \Else
+        \State flip $l$ with probability $\phi(\Delta_{\text{flip}}(l), T)$
+      \EndIf
+    \EndFor
+    \State $T \gets T \cdot \alpha$
+  \Until{five temperatures have passed without improvement and the accepted ratio of worsening moves is less than $2\%$}
+\end{algorithmic}
+#+END_LaTeX
+As the pseudocode implies, the annealing schedule used has a geometric cooling sequence---so here,
+one must decide on parameters for the number of steps per temperature and the factor to multiply by
+(in addition to the initial temperature).  Note that the actual implementation checks in the inner
+loop whether the cost is below some desired goal (then the search can stop immediately) and it keeps
+track of the best seen solution so this is returned even if the search moves away from it.
