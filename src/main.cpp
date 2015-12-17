@@ -29,9 +29,9 @@ int main(int argc, const char* argv[]) {
   int timeout = 20;
   int goal = 0; // good enough cost to stop immediately
   double p = 0.5;
-  double alpha = 0.95;
-  unsigned stepsPerTemperature = 60000;
-  double T0 = 30;
+  double alpha = 0.55;
+  unsigned stepsPerTemperature = 50000;
+  double T0 = 20;
   {
     std::istringstream iss;
     for (int i=1; i<argc; i++) {
