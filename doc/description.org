@@ -228,7 +228,7 @@ track of the best seen solution so this is returned even if the search moves awa
 
 Additionally, if a solution satisfying the desired cost is not found, the implemented algorithm sets
 the temperature to the initial temperature again and resets the counters (for accepted / rejected
-and such).  is given.
+and such).
 
 ** Tuning the annealing schedule
 As described, the annealing schedule has to be decided (initial temperature, the temperature
