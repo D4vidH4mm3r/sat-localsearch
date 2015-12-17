@@ -7,17 +7,16 @@ using std::cout;
 using std::endl;
 
 
-void anneal(State& best, std::minstd_rand& randGen, std::atomic<bool>& stop, int goal) {
+void anneal(State& best, std::minstd_rand& randGen, std::atomic<bool>& stop, double alpha, unsigned stepsPerTemperature, double T, int goal) {
   std::uniform_int_distribution<int> randLit(1, best.input->numLiterals);
   std::uniform_real_distribution<double> randReal(0.0, 1.0);
   // TODO: experiment with number of steps and temperatures
   // TODO: experiment with temperature distribution
-  unsigned stepsPerTemperature = best.input->numLiterals * (best.input->numLiterals-1);
   unsigned accepted = 0;
   unsigned rejected = 0;
   unsigned stepsWithoutImprovement = 0;
   int bestCost = best.input->numClauses + 1;
-  double T = -1 / log(0.97);
+  double T0 = T;
   State state = best;
 
   while (true) {
@@ -50,7 +49,7 @@ void anneal(State& best, std::minstd_rand& randGen, std::atomic<bool>& stop, int
           rejected++;
         }
       }
-      // TODO: is improvement understood as local or improving best known?
+      // improvement understood as improving best known
       if (state.cost < bestCost) {
         bestCost = state.cost;
         improved = true;
@@ -62,12 +61,14 @@ void anneal(State& best, std::minstd_rand& randGen, std::atomic<bool>& stop, int
       stepsWithoutImprovement++;
       double ratio = static_cast<double>(accepted)/static_cast<double>(accepted+rejected);
       if (stepsWithoutImprovement >= 5 && ratio < 0.02) {
-        break;
+        // reheat to initial temperature
+        T = T0;
+        accepted = 0;
+        rejected = 0;
       }
     }
-    T = T * 0.95;
+    T = T * alpha;
   }
-  // TODO: reheat
 }
 
 void minConflict(State& best, std::minstd_rand& randGen, std::atomic<bool>& stop, double p, int goal) {

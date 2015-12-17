@@ -29,6 +29,9 @@ int main(int argc, const char* argv[]) {
   int timeout = 20;
   int goal = 0; // good enough cost to stop immediately
   double p = 0.5;
+  double alpha = 0.95;
+  unsigned stepsPerTemperature = 60000;
+  double T0 = 30;
   {
     std::istringstream iss;
     for (int i=1; i<argc; i++) {
@@ -42,6 +45,18 @@ int main(int argc, const char* argv[]) {
       } else if (arg == "-p") {
         iss.str(argv[i+1]);
         iss >> p;
+        i++;
+      } else if (arg == "--alpha") {
+        iss.str(argv[i+1]);
+        iss >> alpha;
+        i++;
+      } else if (arg == "--spt") {
+        iss.str(argv[i+1]);
+        iss >> stepsPerTemperature;
+        i++;
+      } else if (arg == "--T0") {
+        iss.str(argv[i+1]);
+        iss >> T0;
         i++;
       } else if (arg == "--main::seed" || arg == "-s") {
         iss.str(argv[i+1]);
@@ -116,7 +131,7 @@ int main(int argc, const char* argv[]) {
     if (searchStrategy == 0) {
       threads.push_back(std::thread(minConflict, ref(states[i]), ref(randGen), ref(stop), p, goal));
     } else if (searchStrategy == 1) {
-      threads.push_back(std::thread(anneal, ref(states[i]), ref(randGen), ref(stop), goal));
+      threads.push_back(std::thread(anneal, ref(states[i]), ref(randGen), ref(stop), alpha, stepsPerTemperature, T0, goal));
     } else {
       throw "Unknown search type (only have 0 for min-conflict and 1 for annealing)";
     }

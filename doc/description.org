@@ -65,6 +65,7 @@ for these clause is updated (incremented or decremented; this takes $O(1)$ for e
 clauses).  Therefore, making a step takes $O(m)$ time.
 
 * Search strategy 1: Min-conflict heuristic
+** The algorithm
 The search employed is min-conflict resolution combined with random walk (a crude implementation of
 simulated annealing is also included in the source code, but min-conflict resolution is used by
 default as it currently performs the best).  Starting from a random state, the search proceeds as
@@ -224,16 +225,20 @@ difference in results between these two initialisation strategies:
 #+RESULTS:
 [[file:greedy-init-sat.pdf]]
 
-#+BEGIN_SRC R :session
+#+HEADER: :height 4
+#+BEGIN_SRC R :session :results graphics :file greedy-init-unsat.pdf :exports results
   data <- read.table("../res/test-greedy-init-unsat.csv", header=TRUE)
   completed <- data[data$cost<=2,]
   completed$it <- factor(completed$it)
   ggplot(completed, aes(x=time, colour=it)) + stat_ecdf()
 #+END_SRC
-
+#+CAPTION: Observed cumulative distributions over completion time (unsatisfiable instances) for initialisation strategy 0 (random) and 1 (greedy).
+#+LABEL: fig:unsat-greedy
 #+RESULTS:
 
 * Search strategy 2: Simulated annealing
+
+** The algorithm
 A different search strategy which was implemented and tested was simulated annealing.  The
 implementation works as follows:
 #+BEGIN_LaTeX
@@ -257,3 +262,49 @@ one must decide on parameters for the number of steps per temperature and the fa
 (in addition to the initial temperature).  Note that the actual implementation checks in the inner
 loop whether the cost is below some desired goal (then the search can stop immediately) and it keeps
 track of the best seen solution so this is returned even if the search moves away from it.
+
+** Tuning the annealing schedule
+As described, the annealing schedule has to be decided (initial temperature, the temperature
+decrease function and the number of steps per temperature).  Ideally, one would specify that the
+initial temperature should make it so that a given percentage of non-improving moves are accepted in
+the beginning---this, however, requires advanced sampling and testing.  Instead, as the test
+instances are similar, it is assumed that the ideal starting temperature is similar across the
+tested instances.  Therefore, concrete numbers for the starting temperatures have simply been
+compared using the race method.
+
+In the race, the following parameters were experimented with:
+| $\alpha$ | steps per temperature | initial temperature |
+|----------+-----------------------+---------------------|
+| $0.55$   | $30000$               | $10$                |
+| $0.75$   | $60000$               | $20$                |
+| $0.95$   |                       | $30$                |
+|          |                       | $40$                |
+|          |                       | $50$                |
+Due to lack of further insight, all combinations of the above values for the three parameters
+describing the annealing schedule were compared.  The "candidates" was run for up to five seconds
+each on the satisfiable instances.  They were compared by their time to finish---plus the number of
+violated clauses at the end multiplied by a constant larger than the maximal amount of time (so that
+candidates not reaching a satisfying solution were punished heavily).
+
+After 28 tasks, the race reported that the only candidate still alive was the one with
+$\alpha=0.55$, $30000$ steps per temperature and an initial temperature of $20$; this is rather low
+for all three parameters.
+#+BEGIN_SRC R :session :results graphics :file annealing-race.pdf :exports results
+  load("annealing-race.Rdata")
+  data <- data.frame(apply(res$results, 2, {function (c) (sum(!is.na(c)))}))
+  data$cand <- c(1:30)
+  ggplot(data, aes(x=cand, y=lives)) + geom_bar(stat="identity") +
+      coord_flip() +
+      scale_x_discrete(label=function(x){
+          return(paste(x, "(", test$candidates[x,1],
+                       ",", test$candidates[x,2],
+                       ",", test$candidates[x,3],
+                       ")", sep=""))},
+          breaks=data$cand) +
+      labs(x="Lifetime of candidate", y="Candidates")
+#+END_SRC
+#+CAPTION: Plot showing how many tasks each candidate was run for (how long it survived).  On task 28, candidate 7 apparently got a score which finally showed it to be significantly better than candidate 1.  The numbers next to the candidates indicate $\alpha$, steps per temperature and initial temperature, respectively.
+#+LABEL: fig:anneal-race
+#+RESULTS:
+
+* Conclusion
