@@ -258,14 +258,19 @@ $\alpha=0.55$, $30000$ steps per temperature and an initial temperature of $20$;
 for all three parameters.  The results of the race are illustrated in figure [[fig:anneal-race]].
 #+BEGIN_SRC R :session :results graphics :file annealing-race.pdf :exports results
   load("annealing-race.Rdata")
-  data <- data.frame(apply(res$results, 2, {function (c) (sum(!is.na(c)))}))
+  alpha <- c(0.55,0.75,0.95)
+  spt <- c(30000,60000)
+  T0 <- c(10,20,30,40,50)
+  candidates <- expand.grid(alpha,spt,T0)
+  lives <- apply(res$results, 2, {function (c) (sum(!is.na(c)))})
+  data <- data.frame(lives)
   data$cand <- c(1:30)
   ggplot(data, aes(x=cand, y=lives)) + geom_bar(stat="identity") +
       coord_flip() +
-      scale_x_discrete(=function(x){
-          return(paste(x, "(", test$candidates[x,1],
-                       ",", test$candidates[x,2],
-                       ",", test$candidates[x,3],
+      scale_x_discrete(label=function(x){
+          return(paste(x, "(", candidates[x,1],
+                       ",", candidates[x,2],
+                       ",", candidates[x,3],
                        ")", sep=""))},
           breaks=data$cand) +
       labs(x="Lifetime of candidate", y="Candidates")
